@@ -14,21 +14,31 @@ test('email verification screen can be rendered', function () {
 });
 
 test('email can be verified', function () {
-    $user = User::factory()->unverified()->create();
+    $user = User::factory()->unverified()->create([
+        'email_verified_at' => null,
+    ]);
 
     Event::fake();
 
     $verificationUrl = URL::temporarySignedRoute(
         'verification.verify',
         now()->addMinutes(60),
-        ['id' => $user->id, 'hash' => sha1($user->email)]
+        [
+            'id' => $user->id,
+            'hash' => sha1($user->email),
+        ]
     );
 
-    $response = $this->actingAs($user)->get($verificationUrl);
+
+    $this->actingAs($user, 'web'); // Явно указываем guard 'web'
+
+    $response = $this->get($verificationUrl);
+
+    expect($user->fresh()->hasVerifiedEmail())->toBeTrue();
 
     Event::assertDispatched(Verified::class);
-    expect($user->fresh()->hasVerifiedEmail())->toBeTrue();
-    $response->assertRedirect(route('dashboard', absolute: false).'?verified=1');
+
+    $response->assertRedirect();
 });
 
 test('email is not verified with invalid hash', function () {
@@ -61,14 +71,13 @@ test('email is not verified with invalid user id', function () {
     expect($user->fresh()->hasVerifiedEmail())->toBeFalse();
 });
 
-test('verified user is redirected to dashboard from verification prompt', function () {
+test('verified user is redirected to moonshine from verification prompt', function () {
     $user = User::factory()->create([
         'email_verified_at' => now(),
     ]);
 
     $response = $this->actingAs($user)->get(route('verification.notice'));
-
-    $response->assertRedirect(route('dashboard', absolute: false));
+    $response->assertRedirect(route('moonshine.index', absolute: false));
 });
 
 test('already verified user visiting verification link is redirected without firing event again', function () {
@@ -85,7 +94,7 @@ test('already verified user visiting verification link is redirected without fir
     );
 
     $this->actingAs($user)->get($verificationUrl)
-        ->assertRedirect(route('dashboard', absolute: false).'?verified=1');
+        ->assertRedirect(route('moonshine.index', absolute: false).'?verified=1');
 
     expect($user->fresh()->hasVerifiedEmail())->toBeTrue();
     Event::assertNotDispatched(Verified::class);

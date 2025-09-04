@@ -20,7 +20,7 @@ return new class () extends Migration {
 
         DB::table('moonshine_user_roles')->insert([
             'id' => MoonshineUserRole::DEFAULT_ROLE_ID,
-            'name' => 'Admin',
+            'name' => 'User',
             'created_at' => now(),
             'updated_at' => now(),
         ]);

@@ -24,7 +24,7 @@ final class MoonShineLayout extends AppLayout
     protected function menu(): array
     {
         return [
-//            ...parent::menu(),
+            ...parent::menu(),
             MenuItem::make('Заказы', OrderResource::class)->icon('arrow-long-right'),
             MenuItem::make('Посылки', PackageResource::class)->icon('arrow-long-right'),
         ];

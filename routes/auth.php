@@ -8,9 +8,22 @@ use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\VerifyEmailController;
+use App\Http\Controllers\OAuthController;
 use Illuminate\Support\Facades\Route;
 
+
 Route::middleware('guest')->group(function () {
+    // Маршруты для OAuth-аутентификации
+    Route::prefix('auth/{provider}')->group(function () {
+        Route::get('/redirect', [OAuthController::class, 'redirectToProvider'])
+            ->name('oauth.redirect');
+
+        Route::get('/callback', [OAuthController::class, 'handleProviderCallback'])
+            ->name('oauth.callback')
+            ->middleware('throttle:10,1');
+    })->where('provider', 'google|yandex|vkontakte|mailru');
+
+
     Route::get('register', [RegisteredUserController::class, 'create'])
         ->name('register');
 
@@ -20,8 +33,11 @@ Route::middleware('guest')->group(function () {
     Route::get('login', [AuthenticatedSessionController::class, 'create'])
         ->name('login');
 
-    Route::post('login', [AuthenticatedSessionController::class, 'store'])
-        ->name('login.store');
+    Route::get('loginApi', [AuthenticatedSessionController::class, 'loginApi'])
+        ->name('loginApi');
+
+    Route::get('logoutApi', [AuthenticatedSessionController::class, 'logoutApi'])
+        ->name('logoutApi');
 
     Route::get('forgot-password', [PasswordResetLinkController::class, 'create'])
         ->name('password.request');
@@ -36,7 +52,7 @@ Route::middleware('guest')->group(function () {
         ->name('password.store');
 });
 
-Route::middleware('auth')->group(function () {
+Route::middleware('multiAuth')->group(function () {
     Route::get('verify-email', EmailVerificationPromptController::class)
         ->name('verification.notice');
 
@@ -55,6 +71,6 @@ Route::middleware('auth')->group(function () {
         ->middleware('throttle:6,1')
         ->name('password.confirm.store');
 
-    Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
+    Route::get('logout', [AuthenticatedSessionController::class, 'destroy'])
         ->name('logout');
 });

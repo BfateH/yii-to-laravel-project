@@ -9,12 +9,7 @@ use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use MoonShine\Laravel\Exceptions\MoonShineNotFoundException;
 use MoonShine\Laravel\Forms\FiltersForm;
-use MoonShine\Laravel\Forms\LoginForm;
-use MoonShine\Laravel\Http\Middleware\Authenticate;
 use MoonShine\Laravel\Http\Middleware\ChangeLocale;
-use MoonShine\Laravel\Layouts\AppLayout;
-use MoonShine\Laravel\Models\MoonshineUser;
-use MoonShine\Laravel\Pages\Dashboard;
 use MoonShine\Laravel\Pages\ErrorPage;
 use MoonShine\Laravel\Pages\LoginPage;
 use MoonShine\Laravel\Pages\ProfilePage;
@@ -26,7 +21,7 @@ return [
 
 
     // Default flags
-    'use_migrations' => true,
+    'use_migrations' => false,
     'use_notifications' => true,
     'use_database_notifications' => true,
     'use_routes' => true,
@@ -62,9 +57,9 @@ return [
     // Authentication and profile
     'auth' => [
         'enabled' => true,
-        'guard' => 'moonshine',
-        'model' => MoonshineUser::class,
-        'middleware' => Authenticate::class,
+        'guard' => 'web',
+        'model' => \App\Models\User::class,
+        'middleware' => \App\Http\Middleware\MultiAuthMiddleware::class,
         'pipelines' => [],
     ],
 
@@ -80,7 +75,7 @@ return [
     'layout' => App\MoonShine\Layouts\MoonShineLayout::class,
 
     'forms' => [
-        'login' => LoginForm::class,
+        'login' => \App\MoonShine\Forms\LoginFormWithSocials::class,
         'filters' => FiltersForm::class,
     ],
 

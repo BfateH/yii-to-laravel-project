@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use MoonShine\Laravel\Models\MoonshineUserRole;
 
 return new class extends Migration
 {
@@ -13,11 +14,31 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
+
+            $table->foreignId('role_id')
+                ->default(MoonshineUserRole::DEFAULT_ROLE_ID)
+                ->constrained('moonshine_user_roles')
+                ->cascadeOnDelete()
+                ->cascadeOnUpdate();
+
             $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            $table->string('name')->nullable();
+            $table->string('avatar')->nullable();
+
+            // Провайдер для jwt
+            $table->string('provider')->nullable();
+            $table->string('provider_id')->nullable();
+
+            // ID провайдеров соц.сетей
+            $table->string('google_id')->nullable();
+            $table->string('yandex_id')->nullable();
+            $table->string('vkontakte_id')->nullable();
+            $table->string('mailru_id')->nullable();
+
             $table->rememberToken();
+
+            $table->timestamp('email_verified_at')->nullable();
             $table->timestamps();
         });
 

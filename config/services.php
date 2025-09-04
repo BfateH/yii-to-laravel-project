@@ -1,7 +1,6 @@
 <?php
 
-return [
-
+$services = [
     /*
     |--------------------------------------------------------------------------
     | Third Party Services
@@ -34,5 +33,10 @@ return [
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
     ],
-
 ];
+
+// Добавляем OAuth-провайдеры
+$oauthConfig = require __DIR__.'/oauth.php';
+
+// Объединяем массивы
+return array_merge($services, $oauthConfig);

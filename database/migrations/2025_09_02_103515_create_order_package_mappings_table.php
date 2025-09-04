@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('om_order_package_mappings', function (Blueprint $table) {
+        Schema::create('order_package_mappings', function (Blueprint $table) {
             $table->id();
             $table->integer('internal_status')->unique();
             $table->integer('external_status')->nullable();
@@ -24,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('om_order_package_mappings');
+        Schema::dropIfExists('order_package_mappings');
     }
 };

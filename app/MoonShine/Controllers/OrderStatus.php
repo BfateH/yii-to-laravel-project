@@ -6,7 +6,6 @@ namespace App\MoonShine\Controllers;
 
 use App\Http\Requests\Moonshine\Order\OrderStatusRequest;
 use App\Modules\OrderManagement\Models\OrderPackageStatusMapping;
-use MoonShine\Laravel\MoonShineRequest;
 use MoonShine\Laravel\Http\Controllers\MoonShineController;
 use MoonShine\Support\Enums\ToastType;
 use Symfony\Component\HttpFoundation\Response;

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\MoonShine\Resources;
 
+use App\Models\User;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Validation\Rule;
 use MoonShine\Laravel\Enums\Action;
@@ -38,7 +39,7 @@ use Stringable;
  */
 class MoonShineUserResource extends ModelResource
 {
-    protected string $model = MoonshineUser::class;
+    protected string $model = User::class;
 
     protected string $column = 'name';
 
@@ -64,7 +65,7 @@ class MoonShineUserResource extends ModelResource
             ID::make()->sortable(),
 
             BelongsTo::make(
-                __('moonshine::ui.resource.role'),
+                __('moonshine::ui.resource.single_role'),
                 'moonshineUserRole',
                 formatted: static fn (MoonshineUserRole $model) => $model->name,
                 resource: MoonShineUserRoleResource::class,
@@ -117,7 +118,7 @@ class MoonShineUserResource extends ModelResource
 
                         Image::make(__('moonshine::ui.resource.avatar'), 'avatar')
                             ->disk(moonshineConfig()->getDisk())
-                            ->dir('moonshine_users')
+                            ->dir('users')
                             ->allowedExtensions(['jpg', 'png', 'jpeg', 'gif']),
 
                         Date::make(__('moonshine::ui.resource.created_at'), 'created_at')
@@ -148,13 +149,13 @@ class MoonShineUserResource extends ModelResource
     {
         return [
             'name' => 'required',
-            'moonshine_user_role_id' => 'required',
+            'role_id' => 'required',
             'email' => [
                 'sometimes',
                 'bail',
                 'required',
                 'email',
-                Rule::unique('moonshine_users')->ignoreModel($item),
+                Rule::unique('users')->ignoreModel($item),
             ],
             'avatar' => ['sometimes', 'nullable', 'image', 'mimes:jpeg,jpg,png,gif'],
             'password' => $item->exists

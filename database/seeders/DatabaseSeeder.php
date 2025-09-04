@@ -15,7 +15,7 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        DB::table('moonshine_users')->insert([
+        User::query()->create([
             'email' => 'admin@admin.ru',
             'password' => Hash::make('123123123'),
             'name' => 'admin'

@@ -10,7 +10,6 @@ class Package extends Model
 {
     use SoftDeletes;
 
-    protected $table = 'om_packages';
     protected $fillable = [
         'status',
     ];
