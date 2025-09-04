@@ -35,3 +35,11 @@ eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6InRlc3QtcnNhIn0.eyJzdWIiOiIxMjM0NTY3
 - Выходим здесь /logoutApi
 - Для входа используем password и email указанный при регистрации
 - от сервера получаем token, который можно передавать как query параметр api_key либо в заголовке X-API-Key
+
+## При настройке OAuth в личных кабинетах нужно указать RedirectURL
+- Для Google /auth/google/callback
+- Для Yandex /auth/yandex/callback
+- Для Vkontakte /auth/vkontakte/callback
+- Для MailRu /auth/mailru/callback
+
+**Все секреты в файле .env**
