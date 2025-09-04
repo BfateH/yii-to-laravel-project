@@ -11,6 +11,8 @@
 
 ## Описание SSO‑потока
 
+**0. Настраиваем доступные провайдеры в /config/sso.php**
+
 **1. Стучимся сюда /api/auth/token-login**
 
 - поля provider и token, в payload у токена обязательно email
@@ -24,6 +26,12 @@ eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6InRlc3QtcnNhIn0.eyJzdWIiOiIxMjM0NTY3
 - берем токен из поля access_token
 - сохраняем его, например в postman. Authorisation: Bearer наш_токен
 
-**3. Можем использовать api**
+**3. Всё, можем использовать api**
 - Например, для теста идем сюда /api/me
 - Или сюда для выхода /api/logout
+
+## Наши собственные API токены 
+- Выдаются здесь /loginApi (сам роут думаю нужно поменять в другое место)
+- Выходим здесь /logoutApi
+- Для входа используем password и email указанный при регистрации
+- от сервера получаем token, который можно передавать как query параметр api_key либо в заголовке X-API-Key
