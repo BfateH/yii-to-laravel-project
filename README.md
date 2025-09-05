@@ -39,7 +39,8 @@ eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6InRlc3QtcnNhIn0.eyJzdWIiOiIxMjM0NTY3
   "exp": 1799065386,
   "email": "test@mail.ru",
   "iss": "https://token.dev",
-  "aud": "api://default"
+  "aud": "api://default",
+  "jti": "123123"
 }
 
 **2. Нам отвечает сервер с данными**
