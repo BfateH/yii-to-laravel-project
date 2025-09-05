@@ -21,6 +21,27 @@
 Пример токена
 eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6InRlc3QtcnNhIn0.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTc1NzA2MTc4NiwiZXhwIjoxNzk5MDY1Mzg2LCJlbWFpbCI6InRlc3RAbWFpbC5ydSIsImlzcyI6Imh0dHBzOi8vdG9rZW4uZGV2IiwiYXVkIjoiYXBpOi8vZGVmYXVsdCJ9.asvXgGQxDbz0e5eyGM9L8IHnPdmT4BO2DqD-FLyIYVaH-PkG0rD4Rp4CM17aNlWrZ66qGI8kdnRMMI9S9VbLatrYDTun7H3IwN5Gkx1WCWPQJYECS_BnAGu-9jvG41QFnUjEHvhfEdmWjxHE4pp9Hyn88kuK183jGvFCaqQoeeMoOCboP0kYd92yjiU0oAy9qna8rBoOQfGMDs4gFLIBIltYntdzm1CfOSDrE-8P07X_-qXLWf_QVnJe04KXG4nadbCAidG0c57Io8yW4zYHSrRhjpPIkfRSXp_VljSqSq7h4wqA7EqTdaR3AolL2rCrNXe3NjeIAzmA7JIZNlhjeQ
 
+Пример header токена
+
+{
+  "typ": "JWT",
+  "alg": "RS256",
+  "kid": "test-rsa"
+}
+
+Пример payload токена 
+
+{
+  "sub": "1234567890",
+  "name": "John Doe",
+  "admin": true,
+  "iat": 1757061786,
+  "exp": 1799065386,
+  "email": "test@mail.ru",
+  "iss": "https://token.dev",
+  "aud": "api://default"
+}
+
 **2. Нам отвечает сервер с данными**
 
 - берем токен из поля access_token
