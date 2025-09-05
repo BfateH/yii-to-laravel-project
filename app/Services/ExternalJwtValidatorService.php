@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Firebase\JWT\JWK;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
@@ -53,11 +54,21 @@ class ExternalJwtValidatorService
 
         // Получаем JWKS набор ключей от провайдера
         $jwks = $this->fetchJwks($this->jwksUrl);
-        $key = $this->findPublicKey($jwks, $header->kid); // Используем метод для поиска ключа по kid
+        $key = $this->findPublicKey($jwks, $header->kid); // Поиск ключа по kid
 
         // Декодируем JWT
         try {
             $decoded = JWT::decode($token, $key);
+
+            // Проверка issuer
+            if (!in_array($decoded->iss, $this->allowedIssuers)) {
+                throw new \Exception("Invalid issuer");
+            }
+
+            // Проверка audience
+            if (!in_array($decoded->aud, $this->allowedAudiences)) {
+                throw new \Exception("Invalid audience");
+            }
         } catch (\Exception $e) {
             Log::error("JWT decoding failed: " . $e->getMessage());
             throw new \Exception("Signature verification failed: " . $e->getMessage());
@@ -68,26 +79,30 @@ class ExternalJwtValidatorService
 
     public function fetchJwks(string $url): array
     {
-        $response = Http::timeout(10)
-            ->withOptions(['verify' => config('app.env') !== 'local'])
-            ->get($url);
+        $cacheKey = "jwks:{$url}";
+        $ttl = config('sso.jwks_cache_ttl', 3600);
 
-        if (!$response->successful()) {
-            throw new \Exception("Failed to fetch JWKS from {$url}");
-        }
+        return Cache::remember($cacheKey, $ttl, function () use ($url) {
+            $response = Http::timeout(10)
+                ->withOptions(['verify' => config('app.env') !== 'local'])
+                ->get($url);
 
-        $jwks = $response->json();
+            if (!$response->successful()) {
+                throw new \Exception("Failed to fetch JWKS from {$url}");
+            }
 
-        if (!isset($jwks['keys']) || !is_array($jwks['keys'])) {
-            throw new \Exception("Invalid JWKS structure: missing 'keys' array");
-        }
+            $jwks = $response->json();
 
-        return $jwks;
+            if (!isset($jwks['keys']) || !is_array($jwks['keys'])) {
+                throw new \Exception("Invalid JWKS structure: missing 'keys' array");
+            }
+
+            return $jwks;
+        });
     }
 
     public function findPublicKey(array $jwks, string $kid): Key
     {
-        // Ищем ключ с указанным kid
         foreach ($jwks['keys'] as $key) {
             if ($key['kid'] === $kid) {
                 try {
@@ -95,8 +110,22 @@ class ExternalJwtValidatorService
                     return new Key($parsedKey->getKeyMaterial(), 'RS256');
                 } catch (\Exception $e) {
                     Log::error("Failed to parse JWK: " . $e->getMessage());
+
+                    // Принудительно обновляем кеш при ошибке парсинга ключа
+                    Cache::forget("jwks:{$this->jwksUrl}");
                     throw new \Exception("Invalid key format");
                 }
+            }
+        }
+
+        // Если ключ не найден, обновляем кеш и пробуем снова
+        Cache::forget("jwks:{$this->jwksUrl}");
+        $jwks = $this->fetchJwks($this->jwksUrl);
+
+        foreach ($jwks['keys'] as $key) {
+            if ($key['kid'] === $kid) {
+                $parsedKey = JWK::parseKey($key, 'RS256');
+                return new Key($parsedKey->getKeyMaterial(), 'RS256');
             }
         }
 

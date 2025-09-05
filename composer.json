@@ -10,6 +10,8 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
+        "ext-openssl": "*",
+        "darkaonline/l5-swagger": "^9.0",
         "firebase/php-jwt": "^6.11",
         "inertiajs/inertia-laravel": "^2.0",
         "laravel/framework": "^12.0",

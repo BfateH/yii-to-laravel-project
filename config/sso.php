@@ -10,4 +10,5 @@ return [
 
         // Другие провайдеры...
     ],
+    'jwks_cache_ttl' => env('JWKS_CACHE_TTL', 3600)
 ];

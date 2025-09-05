@@ -12,6 +12,12 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
+/**
+ * @OA\Tag(
+ *     name="Authentication",
+ *     description="Аутентификация и управление токенами JWT"
+ * )
+ */
 class AuthController extends Controller
 {
     protected $jtiService;
@@ -21,6 +27,81 @@ class AuthController extends Controller
         $this->jtiService = $jtiService;
     }
 
+    /**
+     * Аутентификация по внешнему JWT токену
+     *
+     * @OA\Post(
+     *     path="/auth/token-login",
+     *     operationId="authTokenLogin",
+     *     tags={"Authentication"},
+     *     summary="Аутентификация по внешнему JWT",
+     *     description="Принимает JWT от внешнего провайдера, валидирует его и возвращает токен приложения.",
+     *     security={},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         description="Данные для аутентификации",
+     *         @OA\JsonContent(
+     *             required={"provider", "token"},
+     *             @OA\Property(property="provider", type="string", example="test", description="Провайдер аутентификации"),
+     *             @OA\Property(property="token", type="string", example="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...", description="JWT токен от внешнего провайдера")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Успешная аутентификация",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="access_token", type="string", description="JWT токен для доступа к API"),
+     *             @OA\Property(property="token_type", type="string", example="bearer", description="Тип токена"),
+     *             @OA\Property(property="expires_in", type="integer", example=3600, description="Время жизни токена в секундах"),
+     *             @OA\Property(
+     *                 property="user",
+     *                 type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="name", type="string", example="John Doe"),
+     *                 @OA\Property(property="email", type="string", example="john@example.com"),
+     *                 @OA\Property(property="provider", type="string", example="test"),
+     *                 @OA\Property(property="provider_id", type="string", example="1234567890")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Ошибка аутентификации",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="error", type="string", example="Unauthorized"),
+     *             @OA\Property(property="message", type="string", example="Authentication failed. Please try again.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Ошибка валидации",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="error", type="string", example="The given data was invalid."),
+     *             @OA\Property(
+     *                 property="errors",
+     *                 type="object",
+     *                 @OA\Property(
+     *                     property="provider",
+     *                     type="array",
+     *                     @OA\Items(type="string", example="The provider field is required.")
+     *                 ),
+     *                 @OA\Property(
+     *                     property="token",
+     *                     type="array",
+     *                     @OA\Items(type="string", example="The token field is required.")
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=429,
+     *         description="Слишком много запросов",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="error", type="string", example="Too Many Attempts.")
+     *         )
+     *     )
+     * )
+     */
     public function tokenLogin(TokenLoginRequest $request)
     {
         $provider = $request->input('provider');
@@ -72,6 +153,8 @@ class AuthController extends Controller
                     'jti' => $validatedPayload->jti,
                     'ttl_seconds' => $ttl
                 ]);
+            } else {
+                throw new \Exception('Jti payload data no exists');
             }
 
             // Маппинг полей из payload
@@ -151,7 +234,7 @@ class AuthController extends Controller
             } else {
                 // Для веб-клиентов
                 auth()->login($user);
-                return redirect()->intended('/dashboard');
+                return redirect()->intended(route('moonshine.index'));
             }
 
         } catch (\Exception $e) {
@@ -167,14 +250,40 @@ class AuthController extends Controller
             if ($request->expectsJson()) {
                 return response()->json([
                     'error' => 'Unauthorized',
-                    'message' => 'Authentication failed. Please try again.',
+                    'message' => 'Authentication failed. Please try again. ' . $e->getMessage(),
                 ], 401);
             } else {
-                return redirect()->route('login')->withErrors(['sso' => 'SSO authentication failed. Please try again.']);
+                return redirect()->route('moonshine.login')->withErrors(['sso' => 'SSO authentication failed. Please try again.']);
             }
         }
     }
 
+    /**
+     * Выход из системы (аннулирование токена)
+     *
+     * @OA\Get(
+     *     path="/logout",
+     *     operationId="authLogout",
+     *     tags={"Authentication"},
+     *     summary="Выход из системы с JWT",
+     *     description="Аннулирует текущий JWT токен пользователя.",
+     *     security={{"bearerAuth": {}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Успешный выход из системы",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Successfully logged out")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Неавторизованный доступ",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthorized.")
+     *         )
+     *     )
+     * )
+     */
     public function logout()
     {
         $user = auth('api')->user();

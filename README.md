@@ -7,19 +7,22 @@
 - npm install
 - npm run build
 - php artisan migrate --seed
+- php artisan l5-swagger:generate
 - php artisan serve
+
+**Swagger тут /api/documentation**
 
 ## Описание SSO‑потока
 
 **0. Настраиваем доступные провайдеры в /config/sso.php**
 
-**1. Стучимся сюда /api/auth/token-login**
+**1. Стучимся сюда POST /api/auth/token-login**
 
 - поля provider и token, в payload у токена обязательно email
 - Тестировал здесь https://token.dev/
 
 Пример токена
-eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6InRlc3QtcnNhIn0.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTc1NzA2MTc4NiwiZXhwIjoxNzk5MDY1Mzg2LCJlbWFpbCI6InRlc3RAbWFpbC5ydSIsImlzcyI6Imh0dHBzOi8vdG9rZW4uZGV2IiwiYXVkIjoiYXBpOi8vZGVmYXVsdCJ9.asvXgGQxDbz0e5eyGM9L8IHnPdmT4BO2DqD-FLyIYVaH-PkG0rD4Rp4CM17aNlWrZ66qGI8kdnRMMI9S9VbLatrYDTun7H3IwN5Gkx1WCWPQJYECS_BnAGu-9jvG41QFnUjEHvhfEdmWjxHE4pp9Hyn88kuK183jGvFCaqQoeeMoOCboP0kYd92yjiU0oAy9qna8rBoOQfGMDs4gFLIBIltYntdzm1CfOSDrE-8P07X_-qXLWf_QVnJe04KXG4nadbCAidG0c57Io8yW4zYHSrRhjpPIkfRSXp_VljSqSq7h4wqA7EqTdaR3AolL2rCrNXe3NjeIAzmA7JIZNlhjeQ
+eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6InRlc3QtcnNhIn0.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTc1NzA2MTc4NiwiZXhwIjoxNzk5MDY1Mzg2LCJlbWFpbCI6InRlc3RAbWFpbC5ydSIsImlzcyI6Imh0dHBzOi8vdG9rZW4uZGV2IiwiYXVkIjoiYXBpOi8vZGVmYXVsdCIsImp0aSI6IjEyMzEyMyJ9.hDeCWJVyS3gwXK3AYNSSkadEffDlSqu_fVyH-RQo4gFZI5IHew7NAeeL77Gtmsb1AhqJVAKwcyU3EG2RmxjKN6Sy-qja9T4fiZC4PMUghHsyp2hyJZqoYwVamfnOVXHEGpNt5KYO_ONcP-KebmK77ULmoCNUr0NCHPkLuNPOxFPlKNE-bmoC-eusEQWQU4b-33DkahzhfkOppdS25WjL-Zefe6Z3NBHK-m8LIz47BZ8Uzn8se3tYK3IAbCe1QbocgZjo699sdjC8lsVjVb5qaItMHLe0IPQin8PACC9TGOXjJzZd94cmJqFBnRTowCxBcUXFUBD73KzTbyJyS8pV6g
 
 Пример header токена
 
@@ -49,12 +52,12 @@ eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6InRlc3QtcnNhIn0.eyJzdWIiOiIxMjM0NTY3
 - сохраняем его, например в postman. Authorisation: Bearer наш_токен
 
 **3. Всё, можем использовать api**
-- Например, для теста идем сюда /api/me
-- Или сюда для выхода /api/logout
+- Например, для теста идем сюда GET /api/me
+- Или сюда для выхода GET /api/logout
 
 ## Наши собственные API токены 
-- Выдаются здесь /loginApi (сам роут думаю нужно поменять в другое место)
-- Выходим здесь /logoutApi
+- Выдаются здесь POST /api/auth/tokens
+- Выходим здесь GET /api/auth/tokens/logout
 - Для входа используем password и email указанный при регистрации
 - от сервера получаем token, который можно передавать как query параметр api_key либо в заголовке X-API-Key
 

@@ -10,7 +10,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
-use MoonShine\Laravel\Database\Factories\MoonshineUserFactory;
 use MoonShine\Laravel\Models\MoonshineUserRole;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 
