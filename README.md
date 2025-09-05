@@ -11,6 +11,7 @@
 - php artisan serve
 
 **Swagger тут /api/documentation**
+**Можно ещё запустить php artisan test для проверки тестов**
 
 ## Описание SSO‑потока
 
