@@ -16,13 +16,15 @@ Route::middleware('guest')->group(function () {
     // Маршруты для OAuth-аутентификации
     Route::prefix('auth/{provider}')->group(function () {
         Route::get('/redirect', [OAuthController::class, 'redirectToProvider'])
-            ->name('oauth.redirect');
+            ->name('oauth.redirect')
+            ->where('provider', 'google|yandex|vkontakte|mailru');
 
         Route::get('/callback', [OAuthController::class, 'handleProviderCallback'])
             ->name('oauth.callback')
-            ->middleware('throttle:10,1');
-    })->where('provider', 'google|yandex|vkontakte|mailru');
-
+            ->middleware('throttle:10,1')
+            ->where('provider', 'google|yandex|vkontakte|mailru');
+    });
+    // end Маршруты для OAuth-аутентификации
 
     Route::get('register', [RegisteredUserController::class, 'create'])
         ->name('register');
@@ -46,7 +48,7 @@ Route::middleware('guest')->group(function () {
         ->name('password.store');
 });
 
-Route::middleware('multiAuth')->group(function () {
+Route::middleware('auth:moonshine')->group(function () {
     Route::get('verify-email', EmailVerificationPromptController::class)
         ->name('verification.notice');
 

@@ -286,16 +286,8 @@ class AuthController extends Controller
      */
     public function logout()
     {
-        $user = auth('api')->user();
-
-        Log::info('User logout', [
-            'user_id' => $user->id ?? null,
-            'email' => $user->email ?? null,
-            'ip' => request()->ip()
-        ]);
-
         auth('api')->logout();
-
+        auth('moonshine')->logout();
         return response()->json(['message' => 'Successfully logged out']);
     }
 }

@@ -60,9 +60,11 @@ return [
         'created_at' => 'Created At',
         'admins_title' => 'Admins',
         'role_title' => 'Roles',
+        'partners_title' => 'Partners',
         'role_name' => 'Title',
 
         'main_information' => 'Main information',
+        'delete_information' => 'Account delete',
         'change_password' => 'Change password',
 
         'queued' => 'Queued',

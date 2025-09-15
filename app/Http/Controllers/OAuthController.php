@@ -85,7 +85,7 @@ class OAuthController extends Controller
                 'new_user' => $user->wasRecentlyCreated
             ]);
 
-            return redirect()->intended('/admin');
+            return redirect()->intended(route('moonshine.index'));
 
         } catch (Exception $e) {
             Log::error('OAuth authentication failed', [

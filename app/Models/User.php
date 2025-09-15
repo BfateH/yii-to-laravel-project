@@ -3,10 +3,15 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Enums\Role;
+use App\Modules\Acquiring\Enums\AcquirerType;
+use App\Modules\OrderManagement\Models\Order;
+use App\Modules\OrderManagement\Models\Package;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -19,6 +24,7 @@ class User extends Authenticatable implements JWTSubject
     use HasFactory;
     use Notifiable;
     use HasApiTokens;
+    use SoftDeletes;
 
     protected $table = 'users';
 
@@ -32,10 +38,18 @@ class User extends Authenticatable implements JWTSubject
         'email',
         'password',
         'role_id',
+        'partner_id',
         'avatar',
         'provider',
         'provider_id',
         'google_id', 'yandex_id', 'vkontakte_id', 'mailru_id',
+
+        'is_active',
+        'is_banned',
+        'banned_at',
+        'ban_reason',
+        'delete_requested_at',
+        'delete_confirmation_token',
     ];
 
     /**
@@ -58,6 +72,12 @@ class User extends Authenticatable implements JWTSubject
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+
+            'is_active' => 'boolean',
+            'is_banned' => 'boolean',
+            'banned_at' => 'datetime',
+
+            'delete_requested_at' => 'datetime'
         ];
     }
 
@@ -71,18 +91,50 @@ class User extends Authenticatable implements JWTSubject
         return [];
     }
 
-    protected static function newFactory(): Factory
-    {
-        return UserFactory::new();
-    }
-
-    public function isDefaultUser(): bool
-    {
-        return $this->role_id === MoonshineUserRole::DEFAULT_ROLE_ID;
-    }
-
     public function moonshineUserRole(): BelongsTo
     {
         return $this->belongsTo(MoonshineUserRole::class, 'role_id');
+    }
+
+    public function packages(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Package::class, 'user_id');
+    }
+
+    public function orders(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Order::class, 'user_id');
+    }
+
+    // Связь с конфигурациями эквайринга
+    public function acquirerConfigs(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(AcquirerConfig::class, 'user_id');
+    }
+
+    // Получить активную конфигурацию для определенного типа эквайринга
+    public function activeAcquirerConfig(AcquirerType $type): ?AcquirerConfig
+    {
+        return $this->acquirerConfigs()->where('type', $type)->where('is_active', true)->first();
+    }
+
+    public function partner(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'partner_id');
+    }
+
+    public function isAdminRole(): bool
+    {
+        return $this->role_id === Role::admin->value;
+    }
+
+    public function isDefaultUserRole(): bool
+    {
+        return $this->role_id === Role::user->value;
+    }
+
+    public function isPartnerRole(): bool
+    {
+        return $this->role_id === Role::partner->value;
     }
 }

@@ -14,9 +14,12 @@ class MultiAuthMiddleware
     public function handle(Request $request, Closure $next): Response
     {
         // Попытка аутентификации через JWT
-        if ($request->bearerToken() && $this->authenticateJWT($request)) {
+        if ($request->bearerToken()) {
             try {
-                JWTAuth::parseToken()->authenticate();
+                $user = JWTAuth::parseToken()->authenticate();
+                if($user) {
+                    Auth::guard('moonshine')->setUser($user);
+                }
             } catch (Exception $e) {
                 return response()->json(['error' => 'Unauthorized'], 401);
             }
@@ -26,27 +29,13 @@ class MultiAuthMiddleware
         // Попытка аутентификации через Sanctum API-ключ
         if ($apiKey = $request->query('api_key') ?? $request->header('X-API-Key')) {
             if ($sanctumUser = $this->authenticateSanctum($apiKey)) {
-                Auth::setUser($sanctumUser);
+                Auth::guard('moonshine')->setUser($sanctumUser);
                 return $next($request);
             }
         }
 
-        // Попытка аутентификации через сессии (web guard)
-        if ($sessionUser = Auth::user()) {
-            return $next($request);
-        }
-
         // Если ни один метод не сработал
-        return $this->handleUnauthorized($request);
-    }
-
-    private function authenticateJWT(Request $request)
-    {
-        try {
-            return JWTAuth::parseToken()->authenticate();
-        } catch (\Exception $e) {
-            return null;
-        }
+        return response()->json(['error' => 'Unauthorized'], 401);
     }
 
     private function authenticateSanctum(string $token)
@@ -58,16 +47,5 @@ class MultiAuthMiddleware
         }
 
         return $accessToken->tokenable;
-    }
-
-    private function handleUnauthorized(Request $request)
-    {
-        // Для API-запросов возвращаем JSON
-        if ($request->expectsJson() || $request->is('api/*')) {
-            return response()->json(['error' => 'Unauthorized'], 401);
-        }
-
-        // Для web-запросов делаем редирект на страницу логина
-        return redirect()->guest(route('moonshine.login'));
     }
 }

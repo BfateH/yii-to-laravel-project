@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Enums\Role;
 use App\Models\User;
 use App\Services\JtiService;
 use Firebase\JWT\JWT;
@@ -35,7 +36,7 @@ class SsoJwtAuthTest extends TestCase
 
             // Добавляем роль по умолчанию только при создании таблицы
             DB::table('moonshine_user_roles')->insert([
-                'id' => 1,
+                'id' => Role::user,
                 'name' => 'User',
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -44,7 +45,7 @@ class SsoJwtAuthTest extends TestCase
             // Если таблица уже существует, проверяем есть ли роль с id=1
             if (!DB::table('moonshine_user_roles')->where('id', 1)->exists()) {
                 DB::table('moonshine_user_roles')->insert([
-                    'id' => 1,
+                    'id' => Role::user,
                     'name' => 'User',
                     'created_at' => now(),
                     'updated_at' => now(),
@@ -125,7 +126,7 @@ class SsoJwtAuthTest extends TestCase
             'name' => 'New User',
             'provider' => 'test_provider',
             'provider_id' => '123',
-            'role_id' => 1,
+            'role_id' => Role::user,
         ]);
 
         // Проверяем, что пароль установлен
@@ -151,7 +152,7 @@ class SsoJwtAuthTest extends TestCase
             'provider' => 'test_provider',
             'provider_id' => '456',
             'password' => Hash::make(uniqid()),
-            'role_id' => 1,
+            'role_id' => Role::user,
         ]);
 
         Http::fake([
@@ -217,7 +218,7 @@ class SsoJwtAuthTest extends TestCase
             'provider' => 'test_provider',
             'provider_id' => '789',
             'password' => Hash::make(uniqid()),
-            'role_id' => 1,
+            'role_id' => Role::user,
         ]);
 
         Http::fake([
@@ -324,6 +325,7 @@ class SsoJwtAuthTest extends TestCase
             'name' => 'No ID User',
             'provider' => 'test_provider',
             'provider_id' => null,
+            'role_id' => Role::user,
         ]);
     }
 

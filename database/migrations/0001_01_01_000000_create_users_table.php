@@ -3,7 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use MoonShine\Laravel\Models\MoonshineUserRole;
+use \App\Enums\Role;
 
 return new class extends Migration
 {
@@ -16,10 +16,15 @@ return new class extends Migration
             $table->id();
 
             $table->foreignId('role_id')
-                ->default(MoonshineUserRole::DEFAULT_ROLE_ID)
+                ->default(Role::user)
                 ->constrained('moonshine_user_roles')
                 ->cascadeOnDelete()
                 ->cascadeOnUpdate();
+
+            $table->foreignId('partner_id')
+                ->nullable()
+                ->constrained('users')
+                ->nullOnDelete();
 
             $table->string('email')->unique();
             $table->string('password');
@@ -36,10 +41,20 @@ return new class extends Migration
             $table->string('vkontakte_id')->nullable();
             $table->string('mailru_id')->nullable();
 
-            $table->rememberToken();
+            // Поля для логики активации
+            $table->boolean('is_active')->default(true);
+            $table->boolean('is_banned')->default(false);
+            $table->timestamp('banned_at')->nullable();
+            $table->text('ban_reason')->nullable();
 
+            // Запрос на удаление
+            $table->timestamp('delete_requested_at')->nullable(); // Дата запроса удаления
+            $table->string('delete_confirmation_token')->nullable(); // Токен на удаление
+
+            $table->rememberToken();
             $table->timestamp('email_verified_at')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {

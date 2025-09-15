@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Middleware\CheckAccountStatus;
+use \App\Http\Middleware\MultiAuthMiddleware;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Application;
@@ -16,7 +18,8 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias([
-            'multiAuth' =>\App\Http\Middleware\MultiAuthMiddleware::class,
+            'multiAuth' => MultiAuthMiddleware::class,
+            'checkAccountStatus' => CheckAccountStatus::class,
         ]);
 
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);

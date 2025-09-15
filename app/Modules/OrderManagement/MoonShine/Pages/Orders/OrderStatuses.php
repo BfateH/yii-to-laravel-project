@@ -11,9 +11,11 @@ use MoonShine\Contracts\UI\ComponentContract;
 use MoonShine\Laravel\Pages\Page;
 use MoonShine\Support\Enums\FormMethod;
 use MoonShine\UI\Components\FormBuilder;
+use MoonShine\UI\Components\Layout\Column;
+use MoonShine\UI\Components\Layout\Grid;
 use MoonShine\UI\Components\Table\TableBuilder;
 use MoonShine\UI\Fields\Enum;
-
+use MoonShine\UI\Fields\Text;
 
 
 class OrderStatuses extends Page
@@ -38,26 +40,27 @@ class OrderStatuses extends Page
      * @return list<ComponentContract>
      */
     protected function components(): iterable
-	{
+    {
         $items = $this->getItems();
 
-		return [
+
+        return [
             FormBuilder::make(
-                action: route('admin.orders.statuses.store'),
+                action: route('moonshine.admin.orders.statuses.store'),
                 method: FormMethod::POST,
                 fields: [
                     TableBuilder::make()
                         ->items($items)
                         ->fields([
                             Enum::make('Order Статус', 'orderStatus[]')
-                                ->attach(OrderStatus::class)->disabled(),
+                                ->attach(OrderStatus::class)->previewMode(),
                             Enum::make('Package Статус', 'packageStatus[]')
-                                ->attach(PackageStatus::class)->nullable()
+                                ->attach(PackageStatus::class)->nullable()->afterFill(fn(Enum $ctx) => $ctx->setLabel(''))
                         ])->editable()
                 ]
             )->name('order-statuses-form')
         ];
-	}
+    }
 
     private function getItems(): array
     {

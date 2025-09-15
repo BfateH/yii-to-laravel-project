@@ -223,6 +223,174 @@
                 ]
             }
         },
+        "/exchange-rates/convert": {
+            "get": {
+                "tags": [
+                    "Exchange Rates"
+                ],
+                "summary": "Конвертация валют",
+                "description": "Конвертирует сумму из одной валюты в другую на заданную дату.",
+                "operationId": "769e46d1b20a951b5b02afc12450574b",
+                "parameters": [
+                    {
+                        "name": "amount",
+                        "in": "query",
+                        "description": "Сумма для конвертации",
+                        "required": true,
+                        "schema": {
+                            "type": "number",
+                            "format": "float"
+                        }
+                    },
+                    {
+                        "name": "from",
+                        "in": "query",
+                        "description": "Код исходной валюты (например, USD)",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "to",
+                        "in": "query",
+                        "description": "Код целевой валюты (например, EUR)",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "date",
+                        "in": "query",
+                        "description": "Дата курса (Y-m-d). По умолчанию - сегодня.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Успешная конвертация",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "converted_amount": {
+                                            "type": "number",
+                                            "format": "float",
+                                            "example": 85.5
+                                        },
+                                        "rate_used": {
+                                            "type": "number",
+                                            "format": "float",
+                                            "example": 0.855
+                                        },
+                                        "date": {
+                                            "type": "string",
+                                            "format": "date",
+                                            "example": "2023-10-27"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Ошибка валидации или отсутствующий курс"
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера"
+                    }
+                },
+                "security": []
+            }
+        },
+        "/exchange-rates/history": {
+            "get": {
+                "tags": [
+                    "Exchange Rates"
+                ],
+                "summary": "История курсов валют",
+                "description": "Получает исторические курсы для пары валют в заданном диапазоне дат.",
+                "operationId": "da8f07e1ecec52ce544d523b46e09e47",
+                "parameters": [
+                    {
+                        "name": "base",
+                        "in": "query",
+                        "description": "Код базовой валюты (например, RUB)",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "target",
+                        "in": "query",
+                        "description": "Код целевой валюты (например, USD)",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "start_date",
+                        "in": "query",
+                        "description": "Начальная дата (Y-m-d)",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "end_date",
+                        "in": "query",
+                        "description": "Конечная дата (Y-m-d)",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Список исторических курсов",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "date": {
+                                                "type": "string",
+                                                "format": "date"
+                                            },
+                                            "rate": {
+                                                "type": "number",
+                                                "format": "float"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Ошибка валидации"
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера"
+                    }
+                },
+                "security": []
+            }
+        },
         "/auth/tokens": {
             "post": {
                 "tags": [
@@ -514,6 +682,10 @@
         {
             "name": "Sanctum Token Management",
             "description": "Управление API токенами Sanctum (Наши токены)"
+        },
+        {
+            "name": "Exchange Rates",
+            "description": "Exchange Rates"
         }
     ]
 }

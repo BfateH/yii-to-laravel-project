@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace App\MoonShine\Resources;
 
+use App\Enums\Role;
 use Illuminate\Contracts\Validation\Rule;
+use Illuminate\Support\Facades\Log;
+use MoonShine\Laravel\Enums\Ability;
 use MoonShine\Laravel\Enums\Action;
 use MoonShine\Laravel\Models\MoonshineUserRole;
 use MoonShine\Laravel\Resources\ModelResource;
@@ -31,11 +34,18 @@ class MoonShineUserRoleResource extends ModelResource
 
     protected bool $createInModal = true;
 
+    public function isCan(Ability $ability): bool
+    {
+        $user = auth()->user();
+        return $user->isAdminRole();
+    }
+
     protected bool $detailInModal = true;
 
     protected bool $editInModal = true;
 
     protected bool $cursorPaginate = true;
+    protected bool $usePagination = false;
 
     public function getTitle(): string
     {
@@ -44,7 +54,7 @@ class MoonShineUserRoleResource extends ModelResource
 
     protected function activeActions(): ListOf
     {
-        return parent::activeActions()->except(Action::VIEW);
+        return parent::activeActions()->empty();
     }
 
     protected function indexFields(): iterable
@@ -87,5 +97,14 @@ class MoonShineUserRoleResource extends ModelResource
             'id',
             'name',
         ];
+    }
+
+    protected function beforeDeleting(mixed $item): mixed
+    {
+        if($item->id === 1) {
+            throw new \Exception('Нельзя удалять базовую роль');
+        }
+
+        return $item;
     }
 }

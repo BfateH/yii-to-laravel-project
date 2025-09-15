@@ -61,9 +61,11 @@ return [
         'created_at' => 'Дата создания',
         'admins_title' => 'Пользователи',
         'role_title' => 'Роли',
+        'partners_title' => 'Партнёры',
         'role_name' => 'Название',
 
         'main_information' => 'Основная информация',
+        'delete_information' => 'Удаление аккаунта',
         'change_password' => 'Изменить пароль',
 
         'queued' => 'Поставлен в очередь',

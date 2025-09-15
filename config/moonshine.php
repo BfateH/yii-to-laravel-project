@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Middleware\CheckAccountStatus;
+use App\MoonShine\Pages\ProfilePageCustom;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
@@ -13,6 +15,7 @@ use MoonShine\Laravel\Http\Middleware\ChangeLocale;
 use MoonShine\Laravel\Pages\ErrorPage;
 use MoonShine\Laravel\Pages\LoginPage;
 use MoonShine\Laravel\Pages\ProfilePage;
+use \App\Http\Middleware\MultiAuthMiddleware;
 
 return [
     'title' => env('MOONSHINE_TITLE', 'MoonShine'),
@@ -47,6 +50,7 @@ return [
         VerifyCsrfToken::class,
         SubstituteBindings::class,
         ChangeLocale::class,
+        CheckAccountStatus::class,
     ],
 
     // Storage
@@ -57,9 +61,9 @@ return [
     // Authentication and profile
     'auth' => [
         'enabled' => true,
-        'guard' => 'web',
+        'guard' => 'moonshine',
         'model' => \App\Models\User::class,
-        'middleware' => \App\Http\Middleware\MultiAuthMiddleware::class,
+        'middleware' => \MoonShine\Laravel\Http\Middleware\Authenticate::class,
         'pipelines' => [],
     ],
 
@@ -81,7 +85,7 @@ return [
 
     'pages' => [
         'dashboard' => App\MoonShine\Pages\Dashboard::class,
-        'profile' => ProfilePage::class,
+        'profile' => ProfilePageCustom::class,
         'login' => LoginPage::class,
         'error' => ErrorPage::class,
     ],

@@ -11,6 +11,8 @@
     "require": {
         "php": "^8.2",
         "ext-openssl": "*",
+        "ext-simplexml": "*",
+        "ext-bcmath": "*",
         "darkaonline/l5-swagger": "^9.0",
         "firebase/php-jwt": "^6.11",
         "inertiajs/inertia-laravel": "^2.0",

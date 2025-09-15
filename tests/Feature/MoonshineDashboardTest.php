@@ -8,9 +8,13 @@ test('guests receive unauthorized response', function () {
 });
 
 test('authenticated users can visit the moonshine.index', function () {
-    $user = User::factory()->create();
-    $this->actingAs($user);
+    $user = User::factory()->create([
+        'is_active' => true,
+        'is_banned' => false,
+    ]);
 
-    $response = $this->get(route('moonshine.index'));
+    $response = $this->actingAs($user, 'moonshine')
+        ->get(route('moonshine.index'));
+
     $response->assertStatus(200);
 });

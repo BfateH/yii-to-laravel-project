@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Modules\Acquiring\Contracts\EncryptionInterface;
+use App\Modules\Acquiring\Services\EncryptionService;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Event;
 use SocialiteProviders\Manager\SocialiteWasCalled;
@@ -13,7 +15,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(EncryptionInterface::class, function ($app) {
+            return new EncryptionService();
+        });
     }
 
     /**

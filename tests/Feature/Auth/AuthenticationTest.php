@@ -16,11 +16,12 @@ test('users can authenticate using the login screen', function () {
         'password' => 'password',
     ]);
 
+
     // Проверка редиректа
     $response->assertRedirect(route('moonshine.index'));
 
     // Проверка аутентификации
-    $this->assertAuthenticatedAs($user);
+    $this->assertAuthenticatedAs($user, 'moonshine');
 });
 
 
