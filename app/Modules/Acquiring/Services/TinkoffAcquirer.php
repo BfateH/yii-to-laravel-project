@@ -29,7 +29,7 @@ class TinkoffAcquirer implements AcquirerInterface
         // 2. Подготовка данных запроса к API Init
         $requestData = [
             'TerminalKey' => $terminalKey,
-            'Amount' => bcmul((string)($data['amount'] ?? 0), '100', 0), // Перевод рублей в копейки
+            'Amount' => (int) bcmul((string)($data['amount'] ?? 0), '100', 0), // Перевод рублей в копейки
             'OrderId' => $data['order_id'] ?? uniqid('order_', true), // Генерация уникального ID
         ];
 
