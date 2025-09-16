@@ -360,7 +360,14 @@ class TinkoffAcquirer implements AcquirerInterface
 //        $dataString .= $secretKey;
 
         dump($dataString);
-        // 4. Вычисление SHA-256 хэша и приведение к верхнему регистру
+        if($this->isUtf8($dataString)) {
+            dump('$dataString is UTF-8.');
+        }
+        // 4. Вычисление SHA-256 хэша
         return hash('sha256', $dataString);
+    }
+
+    private function isUtf8($string) {
+        return mb_check_encoding($string, 'UTF-8');
     }
 }
