@@ -19,8 +19,9 @@ class TinkoffAcquirer implements AcquirerInterface
         // 1. Извлечение и проверка обязательных учетных данных партнера
         $terminalKey = $partnerConfig['terminal_key'] ?? null;
         $secretKey = $partnerConfig['secret_key'] ?? null; // Используется для генерации Token
+        $password = $partnerConfig['password'] ?? null; // Используется для генерации Token
 
-        if (!$terminalKey || !$secretKey) {
+        if (!$terminalKey || !$secretKey || !$password) {
             Log::error('TinkoffAcquirer: Missing required credentials (terminal_key or secret_key).', ['partner_config_keys' => array_keys($partnerConfig)]);
             throw new \InvalidArgumentException('Missing required Tinkoff credentials (terminal_key or secret_key).');
         }
@@ -45,8 +46,12 @@ class TinkoffAcquirer implements AcquirerInterface
             }
         }
 
+        $dataForToken = $requestData;
+        $dataForToken['Password'] = $password;
+        dump($dataForToken);
+
         // 3. Генерация токена для запроса
-        $requestData['Token'] = $this->generateToken($requestData, $secretKey);
+        $requestData['Token'] = $this->generateToken($dataForToken, $secretKey);
 
         // 4. Отправка HTTP-запроса к API Тинькофф
         $url = $this->apiBaseUrl . '/v2/Init';
@@ -273,7 +278,6 @@ class TinkoffAcquirer implements AcquirerInterface
         }
 
         // 2. Подготовка данных запроса к API GetState
-        // Согласно GetStateRequest в openapi.txt
         $requestData = [
             'TerminalKey' => $terminalKey,
             'PaymentId' => $acquirerPaymentId,
