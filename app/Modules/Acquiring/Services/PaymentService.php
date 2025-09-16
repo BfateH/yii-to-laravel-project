@@ -172,6 +172,7 @@ class PaymentService
      */
     public function refundPayment(Payment $payment, ?float $amount = null): bool
     {
+        dump($payment);
         // 1. Проверка статуса платежа (нельзя возвращать неуспешные или уже возвращенные)
         if (!in_array($payment->status, [PaymentStatus::SUCCESS], true)) {
             Log::warning("PaymentService: Cannot refund payment {$payment->id} with status {$payment->status->value}.");
@@ -184,18 +185,21 @@ class PaymentService
             Log::error("PaymentService: Partner not found for payment {$payment->id}.");
             return false;
         }
+        dump($partner);
 
         $acquirerType = AcquirerType::tryFrom($payment->acquirer_type);
         if (!$acquirerType) {
             Log::error("PaymentService: Invalid acquirer type '{$payment->acquirer_type}' for payment {$payment->id}.");
             return false;
         }
+        dump($acquirerType);
 
         $acquirerConfig = $partner->activeAcquirerConfig($acquirerType);
         if (!$acquirerConfig || !$acquirerConfig->is_active) {
             Log::error("PaymentService: No active acquirer config found for partner {$partner->id} and type {$acquirerType->value} for refund.");
             return false;
         }
+        dump($acquirerConfig);
 
         // 3. Расшифровать учетные данные
         $decryptedCredentials = $acquirerConfig->getDecryptedCredentials();
@@ -203,6 +207,7 @@ class PaymentService
             Log::error("PaymentService: Failed to decrypt credentials for acquirer config {$acquirerConfig->id} for refund.");
             return false;
         }
+        dump($decryptedCredentials);
 
         // 4. Получить экземпляр эквайринга
         $acquirer = $this->acquirerFactory->make($acquirerType);
@@ -210,6 +215,7 @@ class PaymentService
         // 5. Вызвать метод возврата у эквайринга
         try {
             $isRefunded = $acquirer->refundPayment($payment, $amount, $decryptedCredentials);
+            dump($isRefunded);
         } catch (\Exception $e) {
             Log::error("PaymentService: Acquirer refundPayment failed.", [
                 'exception' => $e->getMessage(),
