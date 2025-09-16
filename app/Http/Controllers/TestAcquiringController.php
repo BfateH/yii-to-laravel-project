@@ -25,7 +25,7 @@ class TestAcquiringController extends Controller
 
         $paymentData = [
             'amount' => 100.50,
-            'order_id' => 'test_order_' . Str::random(8),
+            'order_id' => rand(1000, 100000) . "",
             'description' => 'Тестовый платеж через Laravel модуль',
             'currency' => 'RUB',
         ];
