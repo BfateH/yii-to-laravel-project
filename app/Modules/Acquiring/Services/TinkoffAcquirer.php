@@ -64,6 +64,11 @@ class TinkoffAcquirer implements AcquirerInterface
             ->timeout(30)
             ->post($url, $requestData);
 
+        dump($response);
+        dump($response->body());
+        dump($response->status());
+        dump($response->json());
+
         // 5. Обработка ответа
         if ($response->failed()) {
             Log::error('TinkoffAcquirer: Init API request failed.', [
@@ -360,14 +365,7 @@ class TinkoffAcquirer implements AcquirerInterface
 //        $dataString .= $secretKey;
 
         dump($dataString);
-        if($this->isUtf8($dataString)) {
-            dump('$dataString is UTF-8.');
-        }
         // 4. Вычисление SHA-256 хэша
         return hash('sha256', $dataString);
-    }
-
-    private function isUtf8($string) {
-        return mb_check_encoding($string, 'UTF-8');
     }
 }
