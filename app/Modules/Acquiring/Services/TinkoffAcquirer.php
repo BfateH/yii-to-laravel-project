@@ -359,6 +359,7 @@ class TinkoffAcquirer implements AcquirerInterface
         // 3. Добавление секретного ключа
 //        $dataString .= $secretKey;
 
+        dump($dataString);
         // 4. Вычисление SHA-256 хэша и приведение к верхнему регистру
         return hash('sha256', $dataString);
     }
