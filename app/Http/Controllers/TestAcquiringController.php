@@ -30,6 +30,19 @@ class TestAcquiringController extends Controller
             'currency' => 'RUB',
         ];
 
+        $envFilePath = base_path('.env');
+        if (file_exists($envFilePath)) {
+            $envLines = file($envFilePath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+            dump($envLines);
+        } else {
+            dump("Файл .env не найден");
+        }
+
+        dump($partner);
+        dump($paymentData);
+        dump(AcquirerType::TINKOFF);
+
+
         $result = $this->paymentService->createPayment($partner, $paymentData, AcquirerType::TINKOFF);
 
         if ($result['status'] === 'Success') {

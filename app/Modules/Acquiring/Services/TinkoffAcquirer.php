@@ -51,6 +51,8 @@ class TinkoffAcquirer implements AcquirerInterface
         // 4. Отправка HTTP-запроса к API Тинькофф
         $url = $this->apiBaseUrl . '/v2/Init';
         Log::debug('TinkoffAcquirer: Sending Init request.', ['url' => $url, 'request_data_keys' => array_keys($requestData)]);
+        dump($partnerConfig);
+        dump($requestData);
 
         $response = Http::withHeaders(['Content-Type' => 'application/json'])
             ->withOptions(['verify' => config('app.env') !== 'local'])
@@ -69,6 +71,7 @@ class TinkoffAcquirer implements AcquirerInterface
         }
 
         $responseData = $response->json();
+        dump($responseData);
 
         // 6. Проверка успешности операции по флагу Success
         if (!isset($responseData['Success']) || $responseData['Success'] !== true) {
