@@ -33,6 +33,9 @@ class TinkoffAcquirer implements AcquirerInterface
             'OrderId' => $data['order_id'] ?? uniqid('order_', true), // Генерация уникального ID
         ];
 
+        $dataForToken = $requestData;
+        $dataForToken['Password'] = $password;
+
         // Необязательные параметры (если они есть в $data)
         $optionalFields = [
             'Description', 'Language', 'Recurrent', 'CustomerKey',
@@ -46,28 +49,17 @@ class TinkoffAcquirer implements AcquirerInterface
             }
         }
 
-        $dataForToken = $requestData;
-        $dataForToken['Password'] = $password;
-        dump($dataForToken);
-
         // 3. Генерация токена для запроса
         $requestData['Token'] = $this->generateToken($dataForToken, $secretKey);
 
         // 4. Отправка HTTP-запроса к API Тинькофф
         $url = $this->apiBaseUrl . '/v2/Init';
         Log::debug('TinkoffAcquirer: Sending Init request.', ['url' => $url, 'request_data_keys' => array_keys($requestData)]);
-        dump($partnerConfig);
-        dump($requestData);
 
         $response = Http::withHeaders(['Content-Type' => 'application/json'])
             ->withOptions(['verify' => config('app.env') !== 'local'])
             ->timeout(30)
             ->post($url, $requestData);
-
-        dump($response);
-        dump($response->body());
-        dump($response->status());
-        dump($response->json());
 
         // 5. Обработка ответа
         if ($response->failed()) {
@@ -81,7 +73,6 @@ class TinkoffAcquirer implements AcquirerInterface
         }
 
         $responseData = $response->json();
-        dump($responseData);
 
         // 6. Проверка успешности операции по флагу Success
         if (!isset($responseData['Success']) || $responseData['Success'] !== true) {
@@ -120,6 +111,8 @@ class TinkoffAcquirer implements AcquirerInterface
     {
         // 1. Извлечение секретного ключа партнера
         $secretKey = $partnerConfig['secret_key'] ?? null;
+        $password  = $partnerConfig['password'] ?? null;
+
         if (!$secretKey) {
             Log::error('TinkoffAcquirer: Missing secret key for webhook validation.');
             throw new \InvalidArgumentException('Missing secret key for Tinkoff webhook validation.');
@@ -134,6 +127,7 @@ class TinkoffAcquirer implements AcquirerInterface
 
         // 3. Проверка подписи (Token)
         $dataForToken = array_diff_key($payload, array_flip(['Token']));
+        $dataForToken['Password'] = $password;
         $expectedToken = $this->generateToken($dataForToken, $secretKey);
 
         if (!hash_equals($expectedToken, $receivedToken)) {
@@ -208,8 +202,9 @@ class TinkoffAcquirer implements AcquirerInterface
         // 1. Проверка наличия необходимых данных
         $terminalKey = $partnerConfig['terminal_key'] ?? null;
         $secretKey = $partnerConfig['secret_key'] ?? null;
+        $password = $partnerConfig['password'] ?? null;
 
-        if (!$terminalKey || !$secretKey) {
+        if (!$terminalKey || !$secretKey || !$password) {
             Log::error('TinkoffAcquirer: Missing credentials for refund.');
             throw new \InvalidArgumentException('Missing required Tinkoff credentials for refund.');
         }
@@ -230,8 +225,10 @@ class TinkoffAcquirer implements AcquirerInterface
             $requestData['Amount'] = bcmul((string)$amount, '100', 0);
         }
 
+        $dataForToken = $requestData;
+        $dataForToken['Password'] = $password;
         // 3. Генерация токена для запроса возврата
-        $requestData['Token'] = $this->generateToken($requestData, $secretKey);
+        $requestData['Token'] = $this->generateToken($dataForToken, $secretKey);
 
         // 4. Отправка запроса
         $url = $this->apiBaseUrl . '/v2/Cancel';
@@ -276,6 +273,7 @@ class TinkoffAcquirer implements AcquirerInterface
         // 1. Проверка учетных данных
         $terminalKey = $partnerConfig['terminal_key'] ?? null;
         $secretKey = $partnerConfig['secret_key'] ?? null;
+        $password = $partnerConfig['password'] ?? null;
 
         if (!$terminalKey || !$secretKey) {
             Log::error('TinkoffAcquirer: Missing credentials for status check.');
@@ -288,8 +286,10 @@ class TinkoffAcquirer implements AcquirerInterface
             'PaymentId' => $acquirerPaymentId,
         ];
 
+        $dataForToken = $requestData;
+        $dataForToken['Password'] = $password;
         // 3. Генерация токена
-        $requestData['Token'] = $this->generateToken($requestData, $secretKey);
+        $requestData['Token'] = $this->generateToken($dataForToken, $secretKey);
 
         // 4. Отправка запроса
         $url = $this->apiBaseUrl . '/v2/GetState';
@@ -362,9 +362,8 @@ class TinkoffAcquirer implements AcquirerInterface
         $dataString = implode('', array_values($params));
 
         // 3. Добавление секретного ключа
-//        $dataString .= $secretKey;
+        // $dataString .= $secretKey;
 
-        dump($dataString);
         // 4. Вычисление SHA-256 хэша
         return hash('sha256', $dataString);
     }
