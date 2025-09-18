@@ -2,13 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\MoonShine\Resources;
+namespace App\MoonShine\Resources\users;
 
-use App\Enums\Role;
-use Illuminate\Contracts\Validation\Rule;
-use Illuminate\Support\Facades\Log;
 use MoonShine\Laravel\Enums\Ability;
-use MoonShine\Laravel\Enums\Action;
 use MoonShine\Laravel\Models\MoonshineUserRole;
 use MoonShine\Laravel\Resources\ModelResource;
 use MoonShine\MenuManager\Attributes\Group;
@@ -82,7 +78,7 @@ class MoonShineUserRoleResource extends ModelResource
     }
 
     /**
-     * @return array<string, string[]|string|list<Rule>|list<Stringable>>
+     * @return Stringable
      */
     protected function rules($item): array
     {

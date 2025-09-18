@@ -6,7 +6,7 @@ use App\Enums\Role;
 use App\Models\AcquirerConfig;
 use App\Models\User;
 use App\Modules\Acquiring\Enums\AcquirerType;
-use App\MoonShine\Resources\PartnerResource;
+use App\MoonShine\Resources\users\PartnerResource;
 use Illuminate\Contracts\Database\Query\Builder;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Auth;

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\MoonShine\Resources;
+namespace App\MoonShine\Resources\users;
 
 use App\Enums\Role;
 use Illuminate\Contracts\Database\Eloquent\Builder;

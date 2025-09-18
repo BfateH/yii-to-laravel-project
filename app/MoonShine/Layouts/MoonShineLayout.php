@@ -8,16 +8,20 @@ use App\Modules\Acquiring\Resources\AcquirerConfigResource;
 use App\Modules\Acquiring\Resources\AcquiringResource;
 use App\Modules\OrderManagement\MoonShine\Resources\OrderResource;
 use App\Modules\OrderManagement\MoonShine\Resources\PackageResource;
-use App\MoonShine\Resources\PartnerResource;
-use App\MoonShine\Resources\UserResource;
+use App\MoonShine\Resources\shops\BrandResource;
+use App\MoonShine\Resources\shops\ShopCategoryResource;
+use App\MoonShine\Resources\shops\ShopResource;
+use App\MoonShine\Resources\users\PartnerResource;
+use App\MoonShine\Resources\users\UserResource;
 use Illuminate\Support\Facades\Auth;
 use MoonShine\ColorManager\ColorManager;
 use MoonShine\Contracts\ColorManager\ColorManagerContract;
 use MoonShine\Laravel\Layouts\AppLayout;
 use MoonShine\Laravel\Resources\MoonShineUserRoleResource;
+use MoonShine\MenuManager\MenuGroup;
 use MoonShine\MenuManager\MenuItem;
 use MoonShine\UI\Components\{Layout\Footer, Layout\Layout};
-use App\MoonShine\Resources\TrackingEventResource;
+use App\MoonShine\Resources\CountryResource;
 
 final class MoonShineLayout extends AppLayout
 {
@@ -33,12 +37,18 @@ final class MoonShineLayout extends AppLayout
         $currentUser = Auth::user();
 
         return [
-            MenuItem::make('Пользователи', UserResource::class)->canSee(fn() => $currentUser->isAdminRole() || $currentUser->isPartnerRole()),
-            MenuItem::make('Партнеры', PartnerResource::class)->canSee(fn() => $currentUser->isAdminRole()),
-            MenuItem::make(
-                static fn() => __('moonshine::ui.resource.role_title'),
-                MoonShineUserRoleResource::class
-            )->canSee(fn() => $currentUser->isAdminRole()),
+            MenuGroup::make(static fn() => __('Аккаунты'), [
+                MenuItem::make('Пользователи', UserResource::class)->canSee(fn() => $currentUser->isAdminRole() || $currentUser->isPartnerRole()),
+                MenuItem::make('Партнеры', PartnerResource::class)->canSee(fn() => $currentUser->isAdminRole()),
+                MenuItem::make(static fn() => __('moonshine::ui.resource.role_title'), MoonShineUserRoleResource::class)->canSee(fn() => $currentUser->isAdminRole()),
+            ])->icon('user-group'),
+
+            MenuGroup::make(static fn() => __('Магазины'), [
+                MenuItem::make(static fn() => __('Категории магазинов'),ShopCategoryResource::class)->icon('list-bullet'),
+                MenuItem::make(static fn() => __('Бренды магазинов'),BrandResource::class)->icon('tag'),
+                MenuItem::make(static fn() => __('Список магазинов'),ShopResource::class)->icon('shopping-bag'),
+            ])->icon('shopping-bag')->canSee(fn() => $currentUser->isAdminRole()),
+
             MenuItem::make('Заказы', OrderResource::class)->icon('shopping-cart'),
             MenuItem::make('Посылки', PackageResource::class)->icon('cube'),
             MenuItem::make('Платежи', AcquiringResource::class)->icon('currency-dollar')->canSee(fn() => $currentUser->isAdminRole()),

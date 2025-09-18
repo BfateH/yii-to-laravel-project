@@ -4,7 +4,7 @@ namespace Tests\Feature\MoonShine;
 
 use App\Enums\Role;
 use App\Models\User;
-use App\MoonShine\Resources\UserResource;
+use App\MoonShine\Resources\users\UserResource;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 

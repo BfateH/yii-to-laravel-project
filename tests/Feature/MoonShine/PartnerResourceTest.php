@@ -4,10 +4,9 @@ namespace Tests\Feature\MoonShine;
 
 use App\Enums\Role;
 use App\Models\User;
-use App\MoonShine\Resources\PartnerResource;
+use App\MoonShine\Resources\users\PartnerResource;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
-use MoonShine\Laravel\Enums\Ability;
 
 class PartnerResourceTest extends TestCase
 {

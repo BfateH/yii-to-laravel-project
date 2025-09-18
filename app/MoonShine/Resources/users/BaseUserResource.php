@@ -1,6 +1,6 @@
 <?php
 
-namespace App\MoonShine\Resources;
+namespace App\MoonShine\Resources\users;
 
 use App\Enums\Role;
 use App\Models\User;
@@ -95,7 +95,7 @@ abstract class BaseUserResource extends ModelResource
                 ->method('deactivate')
                 ->icon('x-mark')
                 ->warning()
-                ->canSee(fn(User $user) => !$user->trashed() && $user->is_active),
+                ->canSee(fn(User $user) => !$user->trashed() && $user->is_active && $user->id !== 1),
 
             ActionButton::make('Заблокировать')
                 ->method('ban')
@@ -106,7 +106,7 @@ abstract class BaseUserResource extends ModelResource
                     'Вы уверены, что хотите заблокировать?',
                     'Заблокировать'
                 )
-                ->canSee(fn(User $user) => !$user->trashed() && !$user->is_banned),
+                ->canSee(fn(User $user) => !$user->trashed() && !$user->is_banned && $user->id !== 1),
 
             ActionButton::make('Разблокировать', '#')
                 ->method('unban')
