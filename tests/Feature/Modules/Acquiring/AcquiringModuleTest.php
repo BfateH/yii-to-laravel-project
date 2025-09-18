@@ -37,7 +37,8 @@ class AcquiringModuleTest extends TestCase
 
         $this->validPartnerCredentials = [
             'terminal_key' => 'TestMerchant',
-            'secret_key' => 'password'
+            'secret_key' => 'password',
+            'password' => 'password',
         ];
 
         $this->validPaymentData = [
@@ -58,7 +59,7 @@ class AcquiringModuleTest extends TestCase
         ]);
 
         Http::fake([
-            'https://rest-api-test.tbank.ru/v2/Init' => Http::response([
+            'https://rest-api-test.tinkoff.ru/v2/Init' => Http::response([
                 'Success' => true,
                 'PaymentId' => $this->testAcquirerPaymentId,
                 'PaymentURL' => 'https://securepay.tbank.ru/redirect/abc123',
@@ -70,7 +71,6 @@ class AcquiringModuleTest extends TestCase
 
         $paymentService = new PaymentService(app(AcquirerFactory::class));
         $result = $paymentService->createPayment($this->partner, $this->validPaymentData, AcquirerType::TINKOFF);
-
         $this->assertEquals('Success', $result['status']);
         $this->assertArrayHasKey('payment', $result);
         $this->assertArrayHasKey('redirect_url', $result);
@@ -96,7 +96,7 @@ class AcquiringModuleTest extends TestCase
         ]);
 
         Http::fake([
-            'https://rest-api-test.tbank.ru/v2/Init' => Http::response([
+            'https://rest-api-test.tinkoff.ru/v2/Init' => Http::response([
                 'Success' => false,
                 'ErrorCode' => '1001',
                 'Message' => 'Invalid amount',
@@ -168,7 +168,7 @@ class AcquiringModuleTest extends TestCase
         $payment = Payment::create($paymentData);
 
         Http::fake([
-            'https://rest-api-test.tbank.ru/v2/Cancel' => Http::response([
+            'https://rest-api-test.tinkoff.ru/v2/Cancel' => Http::response([
                 'Success' => true,
                 'ErrorCode' => 0,
                 'Message' => 'OK',
@@ -180,7 +180,7 @@ class AcquiringModuleTest extends TestCase
         $result = $paymentService->refundPayment($payment, 50.00);
         $this->assertTrue($result);
         Http::assertSent(function ($request) {
-            return $request->url() === 'https://rest-api-test.tbank.ru/v2/Cancel' &&
+            return $request->url() === 'https://rest-api-test.tinkoff.ru/v2/Cancel' &&
                 $request['Amount'] == 5000;
         });
     }
@@ -192,11 +192,12 @@ class AcquiringModuleTest extends TestCase
             'TerminalKey' => 'TestMerchant',
             'Amount' => '10000',
             'OrderId' => 'TokenTestOrder',
-            'Description' => 'Test description'
+            'Description' => 'Test description',
+            'Password' => 'password',
         ];
 
         $secretKey = 'password';
-        $expectedToken = '06CDBE01863DF0FF49C95C02C17FC53E07DD9FC413BCD243B628EB5BF8284A5E';
+        $expectedToken = '3083e195b624885ece5f5161b487f68d184e8924778e56eefb0af28678714fed';
         $reflection = new \ReflectionClass($acquirer);
         $method = $reflection->getMethod('generateToken');
         $method->setAccessible(true);
@@ -211,6 +212,7 @@ class AcquiringModuleTest extends TestCase
             'PaymentId' => $this->testAcquirerPaymentId,
             'Status' => 'CONFIRMED',
             'OrderId' => 'ord-123',
+            'Password' => 'password',
         ];
 
         $acquirer = new TinkoffAcquirer();
@@ -259,6 +261,7 @@ class AcquiringModuleTest extends TestCase
             'PaymentId' => $this->testAcquirerPaymentId,
             'Status' => 'CONFIRMED',
             'OrderId' => 'ord-123',
+            'Password' => 'password',
         ];
 
         $acquirer = new TinkoffAcquirer();
@@ -301,6 +304,7 @@ class AcquiringModuleTest extends TestCase
             'PaymentId' => $this->testAcquirerPaymentId,
             'Status' => 'CONFIRMED',
             'OrderId' => 'ord-123',
+            'Password' => 'password',
         ];
 
         $acquirer = new TinkoffAcquirer();

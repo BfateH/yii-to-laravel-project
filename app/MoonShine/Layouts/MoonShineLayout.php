@@ -17,6 +17,7 @@ use MoonShine\Laravel\Layouts\AppLayout;
 use MoonShine\Laravel\Resources\MoonShineUserRoleResource;
 use MoonShine\MenuManager\MenuItem;
 use MoonShine\UI\Components\{Layout\Footer, Layout\Layout};
+use App\MoonShine\Resources\TrackingEventResource;
 
 final class MoonShineLayout extends AppLayout
 {
@@ -35,7 +36,7 @@ final class MoonShineLayout extends AppLayout
             MenuItem::make('Пользователи', UserResource::class)->canSee(fn() => $currentUser->isAdminRole() || $currentUser->isPartnerRole()),
             MenuItem::make('Партнеры', PartnerResource::class)->canSee(fn() => $currentUser->isAdminRole()),
             MenuItem::make(
-                static fn () => __('moonshine::ui.resource.role_title'),
+                static fn() => __('moonshine::ui.resource.role_title'),
                 MoonShineUserRoleResource::class
             )->canSee(fn() => $currentUser->isAdminRole()),
             MenuItem::make('Заказы', OrderResource::class)->icon('shopping-cart'),

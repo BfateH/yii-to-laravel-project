@@ -8,6 +8,7 @@ use App\Modules\OrderManagement\Enums\OrderStatus;
 use App\Modules\OrderManagement\Models\Order;
 use App\Modules\OrderManagement\MoonShine\Pages\Orders\OrderStatuses;
 
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use MoonShine\Contracts\UI\FieldContract;
 use MoonShine\Laravel\Resources\ModelResource;
@@ -50,10 +51,15 @@ class OrderResource extends ModelResource
 
     protected function pages(): array
     {
-        return [
+        $pages = [
             ...parent::pages(),
-            OrderStatuses::class
         ];
+
+        if(Auth::user()->isAdminRole()) {
+            $pages[] = OrderStatuses::class;
+        }
+
+        return $pages;
     }
 
     /**
@@ -70,12 +76,17 @@ class OrderResource extends ModelResource
 
     protected function topButtons(): ListOf
     {
+        $buttons = parent::topButtons();
 
-        return parent::topButtons()->add(
-            ActionButton::make('Настройка статусов',
-                url: fn($model) => $this->getPageUrl(OrderStatuses::class),
-            ),
-        );
+        if(Auth::user()->isAdminRole()) {
+            $buttons->add(
+                ActionButton::make('Настройка статусов',
+                    url: fn($model) => $this->getPageUrl(OrderStatuses::class),
+                ),
+            );
+        }
+
+        return $buttons;
     }
 
     /**

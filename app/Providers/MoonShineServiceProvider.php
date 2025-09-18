@@ -17,6 +17,8 @@ use MoonShine\Contracts\Core\DependencyInjection\ConfiguratorContract;
 use MoonShine\Contracts\Core\DependencyInjection\CoreContract;
 use MoonShine\Laravel\DependencyInjection\MoonShine;
 use MoonShine\Laravel\DependencyInjection\MoonShineConfigurator;
+use App\MoonShine\Resources\CommonUserResource;
+use App\MoonShine\Resources\TrackingEventResource;
 
 class MoonShineServiceProvider extends ServiceProvider
 {
@@ -36,6 +38,8 @@ class MoonShineServiceProvider extends ServiceProvider
                 UserResource::class,
                 AcquiringResource::class,
                 AcquirerConfigResource::class,
+                CommonUserResource::class,
+                TrackingEventResource::class,
             ])
             ->pages([
                 ...$config->getPages(),

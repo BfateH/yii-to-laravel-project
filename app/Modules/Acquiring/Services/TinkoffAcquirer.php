@@ -57,7 +57,7 @@ class TinkoffAcquirer implements AcquirerInterface
         Log::debug('TinkoffAcquirer: Sending Init request.', ['url' => $url, 'request_data_keys' => array_keys($requestData)]);
 
         $response = Http::withHeaders(['Content-Type' => 'application/json'])
-            ->withOptions(['verify' => config('app.env') !== 'local'])
+            ->withOptions(['verify' => config('app.env') !== 'local' && config('app.env') !== 'testing'])
             ->timeout(30)
             ->post($url, $requestData);
 
