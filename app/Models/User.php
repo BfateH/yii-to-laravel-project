@@ -7,10 +7,9 @@ use App\Enums\Role;
 use App\Modules\Acquiring\Enums\AcquirerType;
 use App\Modules\OrderManagement\Models\Order;
 use App\Modules\OrderManagement\Models\Package;
-use Database\Factories\UserFactory;
-use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -50,6 +49,8 @@ class User extends Authenticatable implements JWTSubject
         'ban_reason',
         'delete_requested_at',
         'delete_confirmation_token',
+
+        'telegram_id'
     ];
 
     /**
@@ -136,5 +137,15 @@ class User extends Authenticatable implements JWTSubject
     public function isPartnerRole(): bool
     {
         return $this->role_id === Role::partner->value;
+    }
+
+    public function tickets(): HasMany
+    {
+        return $this->hasMany(Ticket::class);
+    }
+
+    public function webPushSubscriptions(): HasMany
+    {
+        return $this->hasMany(UserWebPushSubscription::class);
     }
 }

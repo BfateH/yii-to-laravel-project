@@ -2,26 +2,37 @@
 
 namespace App\MoonShine\Pages;
 
+use App\Http\Controllers\AccountController;
+use App\Models\Channel;
+use App\Models\Subscription;
 use App\Models\User;
 use App\Notifications\AccountDeletionRequested;
 use App\Services\UserService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use MoonShine\Contracts\Core\DependencyInjection\CoreContract;
+use MoonShine\Contracts\UI\FormBuilderContract;
+use MoonShine\Laravel\Http\Controllers\ProfileController;
 use MoonShine\Laravel\Http\Responses\MoonShineJsonResponse;
+use MoonShine\Laravel\MoonShineAuth;
 use MoonShine\Laravel\MoonShineRequest;
 use MoonShine\Laravel\Pages\ProfilePage;
+use MoonShine\Laravel\TypeCasts\ModelCaster;
 use MoonShine\Support\Enums\Color;
 use MoonShine\Support\Enums\ToastType;
 use MoonShine\UI\Components\ActionButton;
+use MoonShine\UI\Components\Badge;
+use MoonShine\UI\Components\FormBuilder;
 use MoonShine\UI\Components\Heading;
 use MoonShine\UI\Components\Layout\Box;
+use MoonShine\UI\Components\Layout\Flex;
 use MoonShine\UI\Components\Tabs;
 use MoonShine\UI\Components\Tabs\Tab;
 use MoonShine\UI\Fields\ID;
 use MoonShine\UI\Fields\Image;
 use MoonShine\UI\Fields\Password;
 use MoonShine\UI\Fields\PasswordRepeat;
+use MoonShine\UI\Fields\Switcher;
 use MoonShine\UI\Fields\Text;
 
 class ProfilePageCustom extends ProfilePage
@@ -85,6 +96,33 @@ class ProfilePageCustom extends ProfilePage
                 ->error()
         ];
 
+        $currentUser = Auth::user();
+        $alertFields = [];
+
+        $channels = Channel::all();
+        foreach ($channels as $channel) {
+            $isSubscribed = Subscription::where('user_id', $currentUser->id)
+                ->where('channel_id', $channel->id)
+                ->value('subscribed') ?? false;
+
+            $alertFields[] = Switcher::make('Включить ' . $channel->name . ' уведомления?', 'alert_' . $channel->id)
+                ->setValue($isSubscribed)
+                ->onValue(1)
+                ->offValue(0);
+        }
+
+        $alertFields[] = Flex::make([
+            Badge::make('Ваш telegram_id: <b>' . ($currentUser->telegram_id ? $currentUser->telegram_id : 'Не определен') . '</b>')
+        ])->columnSpan(12)->justifyAlign('start');
+
+        $alertFields[] = Flex::make([
+            Badge::make('Для работы <b>webpush</b> уведомлений, нужно разрешить сайту присылать вам уведомления.', Color::INFO)
+        ])->columnSpan(12)->justifyAlign('start');
+
+        $alertFields[] = Flex::make([
+            Badge::make('Для работы <b>telegram</b> уведомлений, нужно написать боту ваш email, используемый на нашем сайте.', Color::INFO)
+        ])->columnSpan(12)->justifyAlign('start');
+
         return [
             Box::make([
                 Tabs::make([
@@ -94,10 +132,25 @@ class ProfilePageCustom extends ProfilePage
                         fn(): bool => $userPasswordsFields !== [],
                     )->icon('key'),
 
+                    Tab::make(__('Уведомления'), $alertFields)->icon('bell-alert'),
+
                     Tab::make(__('moonshine::ui.resource.delete_information'), $deleteFields)->icon('hand-raised'),
                 ]),
             ]),
         ];
+    }
+
+    public function getForm(): FormBuilderContract
+    {
+        $user = MoonShineAuth::getGuard()->user() ?? MoonShineAuth::getModel();
+
+        return FormBuilder::make(route('moonshine.admin.profile.store'))
+            ->async()
+            ->fields($this->fields())
+            ->fillCast($user, new ModelCaster($user::class))
+            ->submit(__('moonshine::ui.save'), [
+                'class' => 'btn-lg btn-primary',
+            ]);
     }
 
     public function sendDeleteRequest(MoonShineRequest $request)

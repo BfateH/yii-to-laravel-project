@@ -17,8 +17,9 @@ Route::prefix('test')->group(function () {
 });
 
 Route::prefix('webhooks')->group(function () {
-    // Маршрут для вебхуков от Тинькофф
     Route::post('/tinkoff', [WebhookController::class, 'handleTinkoff'])->name('webhook.tinkoff');
+
+    Route::post('/alerts/telegram', [WebhookController::class, 'handleTelegramAlert'])->name('webhook.alerts.telegram');
 });
 
 

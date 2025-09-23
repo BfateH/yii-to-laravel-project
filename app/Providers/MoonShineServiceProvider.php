@@ -23,6 +23,12 @@ use MoonShine\Contracts\Core\DependencyInjection\CoreContract;
 use MoonShine\Laravel\DependencyInjection\MoonShine;
 use MoonShine\Laravel\DependencyInjection\MoonShineConfigurator;
 use App\MoonShine\Resources\CountryResource;
+use App\MoonShine\Resources\TicketResource;
+use App\MoonShine\Resources\AlertResource;
+use App\MoonShine\Resources\ChannelResource;
+use App\MoonShine\Resources\AlertLogResource;
+use App\MoonShine\Resources\NotificationTemplateResource;
+use App\MoonShine\Resources\SubscriptionResource;
 
 class MoonShineServiceProvider extends ServiceProvider
 {
@@ -48,6 +54,12 @@ class MoonShineServiceProvider extends ServiceProvider
                 ShopCategoryResource::class,
                 BrandResource::class,
                 CountryResource::class,
+                TicketResource::class,
+                AlertResource::class,
+                ChannelResource::class,
+                AlertLogResource::class,
+                NotificationTemplateResource::class,
+                SubscriptionResource::class,
             ])
             ->pages([
                 ...$config->getPages(),
