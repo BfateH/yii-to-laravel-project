@@ -110,7 +110,7 @@ class AccountControllerTest extends TestCase
     public function test_user_can_update_profile()
     {
         $response = $this->actingAs($this->user, 'moonshine')
-            ->post('/admin/profile', [
+            ->post(route('moonshine.admin.profile.store'), [
                 '_token' => csrf_token(),
                 'name' => 'Updated Name',
                 'email' => $this->user->email,
