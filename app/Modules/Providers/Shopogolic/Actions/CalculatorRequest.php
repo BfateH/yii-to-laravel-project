@@ -27,6 +27,7 @@ class CalculatorRequest extends AbstractAction
             'height' => $params['height'] ?? 1,
         ]);
 
+        dump($params);
         $response = $this->client->post('parcels/rate', $params);
 
         $weight = (float) ($response['weight'] ?? $params['weight']);
