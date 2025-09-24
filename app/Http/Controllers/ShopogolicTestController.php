@@ -140,7 +140,7 @@ class ShopogolicTestController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'An unexpected error occurred.',
+                'message' => 'An unexpected error occurred.' . $e->getMessage(),
             ], 500);
         }
     }
