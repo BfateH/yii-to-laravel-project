@@ -21,7 +21,7 @@ class CountriesRequest extends AbstractAction
             'per-page' => min($perPage, 50),
             'page' => $page,
         ];
-        return $this->getAndMap('/countries', $query);
+        return $this->getAndMap('countries', $query);
     }
 
     protected function mapToDTO(array $data): CountryDTO

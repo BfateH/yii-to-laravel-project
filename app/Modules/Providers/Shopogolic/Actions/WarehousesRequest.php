@@ -25,7 +25,7 @@ class WarehousesRequest extends AbstractAction
             $this->loadCountryCache();
         }
 
-        return $this->getAndMap('/warehouses');
+        return $this->getAndMap('warehouses');
     }
 
     /**

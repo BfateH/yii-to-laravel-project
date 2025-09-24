@@ -42,8 +42,6 @@ class ShopogolicProvider implements ProviderInterface
     public function getWarehouses(array $filters = []): array
     {
         $warehousesRequest = new WarehousesRequest($this->client);
-        dump($warehousesRequest);
-        dump($filters);
         return $warehousesRequest->getAll();
     }
 
