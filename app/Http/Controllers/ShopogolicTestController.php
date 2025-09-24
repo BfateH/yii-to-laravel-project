@@ -19,7 +19,7 @@ class ShopogolicTestController extends Controller
         try {
             /**
              * /api/shopogolic/test?entity=warehouses
-             * /api/shopogolic/test?entity=couriers
+             * /api/shopogolic/test?entity=couriers [x]
              * /api/shopogolic/test?entity=orders
              * /api/shopogolic/test?entity=parcels
              * /api/shopogolic/test?entity=countries
@@ -27,7 +27,7 @@ class ShopogolicTestController extends Controller
              * /api/shopogolic/test?entity=cities
              * /api/shopogolic/test?entity=hsCodes
              * /api/shopogolic/test?entity=users
-             * /api/shopogolic/test?entity=addresses
+             * /api/shopogolic/test?entity=addresses [x]
              * /api/shopogolic/test?entity=warehouses&filters[page]=1&filters[per_page]=10
              * /api/shopogolic/test?entity=couriers&filters[warehouse_id]=1
              * /api/shopogolic/test?entity=orders&filters[warehouse_id]=1

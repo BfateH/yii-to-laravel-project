@@ -26,8 +26,8 @@ class OrdersRequest extends AbstractAction
             }
         }
 
-        // $query['page'] = $filters['page'] ?? 1;
-        // $query['per-page'] = $filters['per-page'] ?? 20;
+         $query['page'] = $filters['page'] ?? 1;
+         $query['per-page'] = $filters['per-page'] ?? 20;
 
         return $this->getAndMap('orders', $query);
     }
