@@ -17,7 +17,7 @@ class CalculatorRequest extends AbstractAction
      */
     public function calculate(array $params): CalculationResultDTO
     {
-        if (empty($params['warehouse_id']) || empty($params['weight']) || empty($params['country_code'])) {
+        if (empty($params['warehouse_id']) || empty($params['weight']) || empty($params['address']['country_code'])) {
             throw new \InvalidArgumentException('Required parameters: warehouse_id, weight, country_code');
         }
 
