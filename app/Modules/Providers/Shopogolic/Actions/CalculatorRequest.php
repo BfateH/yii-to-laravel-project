@@ -17,23 +17,16 @@ class CalculatorRequest extends AbstractAction
      */
     public function calculate(array $params): CalculationResultDTO
     {
-        if (empty($params['warehouse_id']) || empty($params['weight']) || empty($params['address']['country_code'])) {
-            throw new \InvalidArgumentException('Required parameters: warehouse_id, weight, country_code');
+        if (empty($params['warehouse_id']) || empty($params['weight']) || empty($params['length']) || empty($params['width']) || empty($params['height']) || empty($params['address']['country_code']) || empty($params['address']['zipcode'])) {
+            throw new \InvalidArgumentException('Required parameters: warehouse_id, weight, length, width, height, address[country_code], address[zipcode]');
         }
 
-        $params = array_merge($params,[
-            'length' => $params['length'] ?? 1,
-            'width'  => $params['width']  ?? 1,
-            'height' => $params['height'] ?? 1,
-        ]);
-
-        dump($params);
         $response = $this->client->post('parcels/rate', $params);
 
-        $weight = (float) ($response['weight'] ?? $params['weight']);
-        $length = (float) ($response['length'] ?? ($params['length'] ?? 0.0));
-        $width = (float) ($response['width'] ?? ($params['width'] ?? 0.0));
-        $height = (float) ($response['height'] ?? ($params['height'] ?? 0.0));
+        $weight = (float)($response['weight'] ?? $params['weight']);
+        $length = (float)($response['length'] ?? ($params['length'] ?? 0.0));
+        $width = (float)($response['width'] ?? ($params['width'] ?? 0.0));
+        $height = (float)($response['height'] ?? ($params['height'] ?? 0.0));
 
         $couriers = [];
         if (isset($response['couriers']) && is_array($response['couriers'])) {
@@ -52,10 +45,10 @@ class CalculatorRequest extends AbstractAction
     private function mapCourierToDTO(array $data): CourierDTO
     {
         return new CourierDTO(
-            (int) ($data['id'] ?? 0),
-            (string) ($data['name'] ?? 'Unknown Courier'),
-            (int) ($data['warehouse_id'] ?? 0),
-            (float) ($data['calculated_price'] ?? 0.0)
+            (int)($data['id'] ?? 0),
+            (string)($data['name'] ?? 'Unknown Courier'),
+            (int)($data['warehouse_id'] ?? 0),
+            (float)($data['calculated_price'] ?? 0.0)
         );
     }
 
