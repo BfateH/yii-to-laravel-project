@@ -22,7 +22,7 @@ class HsCodesRequest extends AbstractAction
             'page' => $page,
         ];
 
-        return $this->getAndMap('/hscode', $query);
+        return $this->getAndMap('hscode', $query);
     }
 
     protected function mapToDTO(array $data): HsCodeDTO

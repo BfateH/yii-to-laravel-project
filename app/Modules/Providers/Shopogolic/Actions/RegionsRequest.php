@@ -33,7 +33,7 @@ class RegionsRequest extends AbstractAction
             $query['expand'] = implode(',', $expand);
         }
 
-        return $this->getAndMap('/regions', $query);
+        return $this->getAndMap('regions', $query);
     }
 
     protected function mapToDTO(array $data): RegionDTO

@@ -16,7 +16,7 @@ class AddressesRequest extends AbstractAction
      */
     public function create(array $addressData): AddressDTO
     {
-        $response = $this->client->post('/addresses', $addressData);
+        $response = $this->client->post('addresses', $addressData);
         return $this->mapToDTO($response);
     }
 
@@ -30,7 +30,7 @@ class AddressesRequest extends AbstractAction
      */
     public function update(int $addressId, array $addressData): AddressDTO
     {
-        $response = $this->client->put("/addresses/{$addressId}", $addressData);
+        $response = $this->client->put("addresses/{$addressId}", $addressData);
         return $this->mapToDTO($response);
     }
 
@@ -48,7 +48,7 @@ class AddressesRequest extends AbstractAction
         if (!empty($expand)) {
             $query['expand'] = implode(',', $expand);
         }
-        return $this->getAndMap('/addresses', $query);
+        return $this->getAndMap('addresses', $query);
     }
 
     /**
@@ -66,7 +66,7 @@ class AddressesRequest extends AbstractAction
             if (!empty($expand)) {
                 $query['expand'] = implode(',', $expand);
             }
-            $response = $this->client->get("/addresses/{$addressId}", $query);
+            $response = $this->client->get("addresses/{$addressId}", $query);
             return $this->mapToDTO($response);
         } catch (ShopogolicApiException $e) {
             if ($e->getStatusCode() === 404) {
@@ -86,7 +86,7 @@ class AddressesRequest extends AbstractAction
     public function delete(int $addressId): bool
     {
         try {
-            $this->client->delete("/addresses/{$addressId}");
+            $this->client->delete("addresses/{$addressId}");
             return true;
         } catch (ShopogolicApiException $e) {
             if ($e->getStatusCode() !== 204) {

@@ -47,8 +47,6 @@ class Client
         $this->logEnabled = config('shopogolic.log_enabled', true);
         $this->logChannel = config('shopogolic.log_channel', 'stack');
 
-        dump($this->authKey);
-
         $this->httpClient = $httpClient ?? new \GuzzleHttp\Client([
             'base_uri' => $this->baseUrl,
             'timeout'  => $this->timeout,

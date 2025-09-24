@@ -29,7 +29,7 @@ class OrdersRequest extends AbstractAction
         // $query['page'] = $filters['page'] ?? 1;
         // $query['per-page'] = $filters['per-page'] ?? 20;
 
-        return $this->getAndMap('/orders', $query);
+        return $this->getAndMap('orders', $query);
     }
 
     /**
@@ -42,7 +42,7 @@ class OrdersRequest extends AbstractAction
     public function getById(int $orderId): ?OrderDTO
     {
         try {
-            $response = $this->client->get("/orders/{$orderId}");
+            $response = $this->client->get("orders/{$orderId}");
             $data = $response['data'] ?? $response;
 
             return $this->mapToDTO($data);
@@ -63,7 +63,7 @@ class OrdersRequest extends AbstractAction
      */
     public function create(array $orderData): OrderDTO
     {
-        $response = $this->client->post('/orders', $orderData);
+        $response = $this->client->post('orders', $orderData);
         $data = $response['data'] ?? $response;
 
         return $this->mapToDTO($data);
@@ -79,7 +79,7 @@ class OrdersRequest extends AbstractAction
      */
     public function update(int $orderId, array $orderData): OrderDTO
     {
-        $response = $this->client->put("/orders/{$orderId}", $orderData);
+        $response = $this->client->put("orders/{$orderId}", $orderData);
         $data = $response['data'] ?? $response;
 
         return $this->mapToDTO($data);
@@ -94,7 +94,7 @@ class OrdersRequest extends AbstractAction
      */
     public function pay(int $orderId): OrderDTO
     {
-        $response = $this->client->post("/orders/{$orderId}/paid");
+        $response = $this->client->post("orders/{$orderId}/paid");
         $data = $response['data'] ?? $response;
 
         return $this->mapToDTO($data);

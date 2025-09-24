@@ -33,7 +33,7 @@ class CitiesRequest extends AbstractAction
             $query['expand'] = implode(',', $expand);
         }
 
-        return $this->getAndMap('/cities', $query);
+        return $this->getAndMap('cities', $query);
     }
 
     protected function mapToDTO(array $data): CityDTO

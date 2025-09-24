@@ -26,7 +26,7 @@ class ParcelsRequest extends AbstractAction
             }
         }
 
-        return $this->getAndMap('/parcels', $query);
+        return $this->getAndMap('parcels', $query);
     }
 
     /**
@@ -39,7 +39,7 @@ class ParcelsRequest extends AbstractAction
     public function getById(int $parcelId): ?ParcelDTO
     {
         try {
-            $response = $this->client->get("/parcels/{$parcelId}");
+            $response = $this->client->get("parcels/{$parcelId}");
             $data = $response['data'] ?? $response;
 
             return $this->mapToDTO($data);
@@ -60,7 +60,7 @@ class ParcelsRequest extends AbstractAction
      */
     public function create(array $data): ParcelDTO
     {
-        $response = $this->client->post('/parcels', $data);
+        $response = $this->client->post('parcels', $data);
         $responseData = $response['data'] ?? $response;
 
         return $this->mapToDTO($responseData);
@@ -76,7 +76,7 @@ class ParcelsRequest extends AbstractAction
      */
     public function update(int $parcelId, array $data): ParcelDTO
     {
-        $response = $this->client->put("/parcels/{$parcelId}", $data);
+        $response = $this->client->put("parcels/{$parcelId}", $data);
         $responseData = $response['data'] ?? $response;
 
         return $this->mapToDTO($responseData);
@@ -91,7 +91,7 @@ class ParcelsRequest extends AbstractAction
      */
     public function pay(int $parcelId): ParcelDTO
     {
-        $response = $this->client->post("/parcels/{$parcelId}/paid");
+        $response = $this->client->post("parcels/{$parcelId}/paid");
         $data = $response['data'] ?? $response;
 
         return $this->mapToDTO($data);
@@ -111,7 +111,7 @@ class ParcelsRequest extends AbstractAction
             'hold_reason_id' => $holdReasonId,
         ];
 
-        $response = $this->client->post("/parcels/{$parcelId}/hold", $requestData);
+        $response = $this->client->post("parcels/{$parcelId}/hold", $requestData);
         $data = $response['data'] ?? $response;
 
         return $this->mapToDTO($data);

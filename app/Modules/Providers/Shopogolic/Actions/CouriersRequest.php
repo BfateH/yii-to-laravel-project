@@ -20,7 +20,7 @@ class CouriersRequest extends AbstractAction
             'filter[warehouse_id]' => $warehouseId,
         ];
 
-        return $this->getAndMap('/couriers', $query);
+        return $this->getAndMap('couriers', $query);
     }
 
     /**

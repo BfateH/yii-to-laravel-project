@@ -16,7 +16,7 @@ class UsersRequest extends AbstractAction
      */
     public function create(array $userData): UserDTO
     {
-        $response = $this->client->post('/users', $userData);
+        $response = $this->client->post('users', $userData);
         return $this->mapToDTO($response);
     }
 
@@ -30,7 +30,7 @@ class UsersRequest extends AbstractAction
      */
     public function update(int $userId, array $userData): UserDTO
     {
-        $response = $this->client->put("/users/{$userId}", $userData);
+        $response = $this->client->put("users/{$userId}", $userData);
         return $this->mapToDTO($response);
     }
 
@@ -43,7 +43,7 @@ class UsersRequest extends AbstractAction
      */
     public function getAll(array $filters = []): array
     {
-        return $this->getAndMap('/users', $filters);
+        return $this->getAndMap('users', $filters);
     }
 
     /**
@@ -56,7 +56,7 @@ class UsersRequest extends AbstractAction
     public function getById(int $userId): ?UserDTO
     {
         try {
-            $response = $this->client->get("/users/{$userId}");
+            $response = $this->client->get("users/{$userId}");
             return $this->mapToDTO($response);
         } catch (ShopogolicApiException $e) {
             if ($e->getStatusCode() === 404) {
