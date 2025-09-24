@@ -35,9 +35,11 @@ class OrdersRequestTest extends TestCase
 
         $this->clientMock
             ->shouldReceive('get')
-            ->with('/orders', [
+            ->with('orders', [
                 'filter[warehouse_id]' => 1,
-                'filter[user_id]' => 2
+                'filter[user_id]' => 2,
+                'page' => 1,
+                'per-page' => 20
             ])
             ->once()
             ->andReturn($mockResponse);
@@ -51,7 +53,7 @@ class OrdersRequestTest extends TestCase
     {
         $this->clientMock
             ->shouldReceive('get')
-            ->with('/orders/999')
+            ->with('orders/999')
             ->once()
             ->andThrow(new ShopogolicApiException('Not found', 404));
 
@@ -66,7 +68,7 @@ class OrdersRequestTest extends TestCase
 
         $this->clientMock
             ->shouldReceive('post')
-            ->with('/orders', $orderData)
+            ->with('orders', $orderData)
             ->once()
             ->andReturn($mockResponse);
 
@@ -81,7 +83,7 @@ class OrdersRequestTest extends TestCase
 
         $this->clientMock
             ->shouldReceive('post')
-            ->with('/orders/200/paid')
+            ->with('orders/200/paid')
             ->once()
             ->andReturn($mockResponse);
 

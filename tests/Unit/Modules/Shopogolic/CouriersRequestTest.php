@@ -34,7 +34,7 @@ class CouriersRequestTest extends TestCase
 
         $this->clientMock
             ->shouldReceive('get')
-            ->with('/couriers', ['filter[warehouse_id]' => 1])
+            ->with('couriers', ['filter[warehouse_id]' => 1])
             ->once()
             ->andReturn($mockResponse);
 

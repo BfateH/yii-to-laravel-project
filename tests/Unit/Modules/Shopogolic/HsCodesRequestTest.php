@@ -33,7 +33,7 @@ class HsCodesRequestTest extends TestCase
 
         $this->clientMock
             ->shouldReceive('get')
-            ->with('/hscode', ['per-page' => 20, 'page' => 1])
+            ->with('hscode', ['per-page' => 20, 'page' => 1])
             ->once()
             ->andReturn($mockResponse);
 

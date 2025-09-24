@@ -31,7 +31,7 @@ class UsersRequestTest extends TestCase
 
         $this->clientMock
             ->shouldReceive('post')
-            ->with('/users', $userData)
+            ->with('users', $userData)
             ->once()
             ->andReturn($mockResponse);
 
@@ -44,7 +44,7 @@ class UsersRequestTest extends TestCase
     {
         $this->clientMock
             ->shouldReceive('get')
-            ->with('/users/999')
+            ->with('users/999')
             ->once()
             ->andThrow(new ShopogolicApiException('Not found', 404));
 

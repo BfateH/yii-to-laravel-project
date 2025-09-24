@@ -31,7 +31,7 @@ class AddressesRequestTest extends TestCase
 
         $this->clientMock
             ->shouldReceive('post')
-            ->with('/addresses', $addressData)
+            ->with('addresses', $addressData)
             ->once()
             ->andReturn($mockResponse);
 
@@ -48,7 +48,7 @@ class AddressesRequestTest extends TestCase
 
         $this->clientMock
             ->shouldReceive('put')
-            ->with("/addresses/{$addressId}", $updateData)
+            ->with("addresses/{$addressId}", $updateData)
             ->once()
             ->andReturn($mockResponse);
 
@@ -69,7 +69,7 @@ class AddressesRequestTest extends TestCase
 
         $this->clientMock
             ->shouldReceive('get')
-            ->with('/addresses', ['user_id' => 123, 'expand' => 'user,country'])
+            ->with('addresses', ['user_id' => 123, 'expand' => 'user,country'])
             ->once()
             ->andReturn($mockResponse);
 
@@ -82,7 +82,7 @@ class AddressesRequestTest extends TestCase
     {
         $this->clientMock
             ->shouldReceive('get')
-            ->with('/addresses/999', [])
+            ->with('addresses/999', [])
             ->once()
             ->andThrow(new ShopogolicApiException('Not found', 404));
 
@@ -94,7 +94,7 @@ class AddressesRequestTest extends TestCase
     {
         $this->clientMock
             ->shouldReceive('delete')
-            ->with('/addresses/100')
+            ->with('addresses/100')
             ->once()
             ->andReturn([]);
 

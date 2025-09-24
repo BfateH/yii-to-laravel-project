@@ -3,15 +3,12 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\Currency\ExchangeRateController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
-use App\Http\Controllers\ShopogolicTestController;
 use App\Http\Controllers\TestAcquiringController;
 use App\Http\Controllers\WebhookController;
 use App\Http\Resources\User\AuthUserResource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/shopogolic/test', [ShopogolicTestController::class, 'testGet'])
-    ->name('api.shopogolic.test');
 
 Route::prefix('test')->group(function () {
     Route::get('/test-acquiring/create-payment', [TestAcquiringController::class, 'createTestPayment']);

@@ -35,7 +35,7 @@ class CitiesRequestTest extends TestCase
 
         $this->clientMock
             ->shouldReceive('get')
-            ->with('/cities', [
+            ->with('cities', [
                 'page' => 1,
                 'filter[name][like]' => 'Moscow',
                 'filter[region_id]' => 5,

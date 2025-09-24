@@ -37,7 +37,13 @@ class CalculatorRequestTest extends TestCase
         $params = [
             'warehouse_id' => 1,
             'weight' => 2.5,
-            'country_code' => 'US',
+            'length' => 30.0,
+            'width' => 20.0,
+            'height' => 10.0,
+            'address' => [
+                'country_code' => 'US',
+                'zipcode' => '101000',
+            ]
         ];
 
         $mockApiResponse = [
@@ -57,7 +63,7 @@ class CalculatorRequestTest extends TestCase
 
         $this->clientMock
             ->shouldReceive('post')
-            ->with('/parcels/rate', $params)
+            ->with('parcels/rate', $params)
             ->once()
             ->andReturn($mockApiResponse);
 

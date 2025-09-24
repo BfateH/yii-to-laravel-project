@@ -33,7 +33,7 @@ class CountriesRequestTest extends TestCase
 
         $this->clientMock
             ->shouldReceive('get')
-            ->with('/countries', ['per-page' => 20, 'page' => 1])
+            ->with('countries', ['per-page' => 20, 'page' => 1])
             ->once()
             ->andReturn($mockResponse);
 

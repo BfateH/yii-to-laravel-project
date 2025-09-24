@@ -129,7 +129,13 @@ class ShopogolicModuleTest extends TestCase
         $params = [
             'warehouse_id' => 1,
             'weight' => 2.5,
-            'country_code' => 'US',
+            'length' => 1,
+            'width' => 1,
+            'height' => 1,
+            'address' => [
+                'country_code' => 'US',
+                'zipcode' => '101000',
+            ]
         ];
         $results = $provider->calculateShipping($params);
 

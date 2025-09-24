@@ -41,7 +41,7 @@ class ParcelsRequestTest extends TestCase
 
         $this->clientMock
             ->shouldReceive('post')
-            ->with('/parcels', $data)
+            ->with('parcels', $data)
             ->once()
             ->andReturn($mockResponse);
 
@@ -56,7 +56,7 @@ class ParcelsRequestTest extends TestCase
 
         $this->clientMock
             ->shouldReceive('post')
-            ->with('/parcels/300/hold', ['hold_reason_id' => 300])
+            ->with('parcels/300/hold', ['hold_reason_id' => 300])
             ->once()
             ->andReturn($mockResponse);
 
@@ -69,7 +69,7 @@ class ParcelsRequestTest extends TestCase
     {
         $this->clientMock
             ->shouldReceive('get')
-            ->with('/parcels/999')
+            ->with('parcels/999')
             ->once()
             ->andThrow(new ShopogolicApiException('Not found', 404));
 

@@ -35,7 +35,7 @@ class WarehousesRequestTest extends TestCase
     {
         $this->clientMock
             ->shouldReceive('get')
-            ->with('/countries', [
+            ->with('countries', [
                 'per-page' => 20,
                 'page' => 1,
             ])
@@ -48,7 +48,7 @@ class WarehousesRequestTest extends TestCase
 
         $this->clientMock
             ->shouldReceive('get')
-            ->with('/warehouses', [])
+            ->with('warehouses', [])
             ->once()
             ->andReturn([
                 'data' => [

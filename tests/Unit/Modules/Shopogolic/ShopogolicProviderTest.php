@@ -44,7 +44,7 @@ class ShopogolicProviderTest extends TestCase
     {
         $this->clientMock
             ->shouldReceive('get')
-            ->with('/countries', [
+            ->with('countries', [
                 'per-page' => 20,
                 'page' => 1,
             ])
@@ -57,7 +57,7 @@ class ShopogolicProviderTest extends TestCase
 
         $this->clientMock
             ->shouldReceive('get')
-            ->with('/warehouses', [])
+            ->with('warehouses', [])
             ->once()
             ->andReturn([
                 'data' => [
@@ -90,7 +90,7 @@ class ShopogolicProviderTest extends TestCase
     {
         $this->clientMock
             ->shouldReceive('get')
-            ->with('/couriers', ['filter[warehouse_id]' => 5])
+            ->with('couriers', ['filter[warehouse_id]' => 5])
             ->once()
             ->andReturn([
                 'data' => [
@@ -111,9 +111,11 @@ class ShopogolicProviderTest extends TestCase
         $filters = ['warehouse_id' => 1, 'user_id' => 2];
         $this->clientMock
             ->shouldReceive('get')
-            ->with('/orders', [
+            ->with('orders', [
                 'filter[warehouse_id]' => 1,
                 'filter[user_id]' => 2,
+                'page' => 1,
+                'per-page' => 20
             ])
             ->once()
             ->andReturn([
@@ -146,7 +148,7 @@ class ShopogolicProviderTest extends TestCase
 
         $this->clientMock
             ->shouldReceive('post')
-            ->with('/orders', $orderData)
+            ->with('orders', $orderData)
             ->once()
             ->andReturn($mockResponse);
 
@@ -168,7 +170,7 @@ class ShopogolicProviderTest extends TestCase
 
         $this->clientMock
             ->shouldReceive('post')
-            ->with('/orders/200/paid')
+            ->with('orders/200/paid')
             ->once()
             ->andReturn($mockResponse);
 
@@ -182,7 +184,7 @@ class ShopogolicProviderTest extends TestCase
     {
         $this->clientMock
             ->shouldReceive('get')
-            ->with('/orders/999')
+            ->with('orders/999')
             ->once()
             ->andThrow(new \App\Modules\Providers\Shopogolic\Exceptions\ShopogolicApiException('Not found', 404));
 
@@ -195,7 +197,7 @@ class ShopogolicProviderTest extends TestCase
         $filters = ['user_id' => 3];
         $this->clientMock
             ->shouldReceive('get')
-            ->with('/parcels', ['filter[user_id]' => 3])
+            ->with('parcels', ['filter[user_id]' => 3])
             ->once()
             ->andReturn([
                 'data' => [
@@ -242,7 +244,7 @@ class ShopogolicProviderTest extends TestCase
 
         $this->clientMock
             ->shouldReceive('post')
-            ->with('/parcels/300/paid')
+            ->with('parcels/300/paid')
             ->once()
             ->andReturn($mockResponse);
 
@@ -270,7 +272,7 @@ class ShopogolicProviderTest extends TestCase
 
         $this->clientMock
             ->shouldReceive('post')
-            ->with('/parcels/300/hold', ['hold_reason_id' => 300])
+            ->with('parcels/300/hold', ['hold_reason_id' => 300])
             ->once()
             ->andReturn($mockResponse);
 
@@ -281,7 +283,18 @@ class ShopogolicProviderTest extends TestCase
 
     public function test_calculate_shipping_returns_calculation_result_in_array()
     {
-        $params = ['warehouse_id' => 1, 'weight' => 2.5, 'country_code' => 'US'];
+        $params = [
+            'warehouse_id' => 1,
+            'weight' => 2.5,
+            'length' => 30.0,
+            'width' => 20.0,
+            'height' => 10.0,
+            'address' => [
+                'country_code' => 'US',
+                'zipcode' => '12345',
+            ]
+        ];
+
         $mockResponse = [
             'weight' => 2.5,
             'length' => 30.0,
@@ -294,7 +307,7 @@ class ShopogolicProviderTest extends TestCase
 
         $this->clientMock
             ->shouldReceive('post')
-            ->with('/parcels/rate', $params)
+            ->with('parcels/rate', $params)
             ->once()
             ->andReturn($mockResponse);
 
@@ -312,7 +325,7 @@ class ShopogolicProviderTest extends TestCase
 
         $this->clientMock
             ->shouldReceive('post')
-            ->with('/users', $userData)
+            ->with('users', $userData)
             ->once()
             ->andReturn($mockResponse);
 
@@ -325,7 +338,7 @@ class ShopogolicProviderTest extends TestCase
     {
         $this->clientMock
             ->shouldReceive('get')
-            ->with('/users/999')
+            ->with('users/999')
             ->once()
             ->andThrow(new \App\Modules\Providers\Shopogolic\Exceptions\ShopogolicApiException('Not found', 404));
 
@@ -340,7 +353,7 @@ class ShopogolicProviderTest extends TestCase
 
         $this->clientMock
             ->shouldReceive('post')
-            ->with('/addresses', $addressData)
+            ->with('addresses', $addressData)
             ->once()
             ->andReturn($mockResponse);
 
@@ -353,7 +366,7 @@ class ShopogolicProviderTest extends TestCase
     {
         $this->clientMock
             ->shouldReceive('delete')
-            ->with('/addresses/100')
+            ->with('addresses/100')
             ->once()
             ->andReturn([]);
 
@@ -365,7 +378,7 @@ class ShopogolicProviderTest extends TestCase
     {
         $this->clientMock
             ->shouldReceive('get')
-            ->with('/countries', ['per-page' => 20, 'page' => 1])
+            ->with('countries', ['per-page' => 20, 'page' => 1])
             ->once()
             ->andReturn([
                 'data' => [
@@ -386,7 +399,7 @@ class ShopogolicProviderTest extends TestCase
         $expand = ['country'];
         $this->clientMock
             ->shouldReceive('get')
-            ->with('/regions', [
+            ->with('regions', [
                 'page' => 1,
                 'filter[country_code]' => 'RU',
                 'expand' => 'country',
@@ -411,7 +424,7 @@ class ShopogolicProviderTest extends TestCase
         $expand = ['country'];
         $this->clientMock
             ->shouldReceive('get')
-            ->with('/cities', [
+            ->with('cities', [
                 'page' => 1,
                 'filter[name][like]' => 'Moscow',
                 'expand' => 'country',
@@ -434,7 +447,7 @@ class ShopogolicProviderTest extends TestCase
     {
         $this->clientMock
             ->shouldReceive('get')
-            ->with('/hscode', ['per-page' => 20, 'page' => 1])
+            ->with('hscode', ['per-page' => 20, 'page' => 1])
             ->once()
             ->andReturn([
                 'data' => [
