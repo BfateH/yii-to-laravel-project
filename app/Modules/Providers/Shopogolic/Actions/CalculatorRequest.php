@@ -21,6 +21,12 @@ class CalculatorRequest extends AbstractAction
             throw new \InvalidArgumentException('Required parameters: warehouse_id, weight, country_code');
         }
 
+        $params = array_merge($params,[
+            'length' => $params['length'] ?? 1,
+            'width'  => $params['width']  ?? 1,
+            'height' => $params['height'] ?? 1,
+        ]);
+
         $response = $this->client->post('parcels/rate', $params);
 
         $weight = (float) ($response['weight'] ?? $params['weight']);
