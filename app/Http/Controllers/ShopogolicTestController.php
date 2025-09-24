@@ -58,13 +58,13 @@ class ShopogolicTestController extends Controller
                 'filters' => 'nullable|array',
             ]);
 
-            $envFilePath = base_path('.env');
-            if (file_exists($envFilePath)) {
-                $envLines = file($envFilePath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-                dump($envLines);
-            } else {
-                dump("Файл .env не найден");
-            }
+//            $envFilePath = base_path('.env');
+//            if (file_exists($envFilePath)) {
+//                $envLines = file($envFilePath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+//                dump($envLines);
+//            } else {
+//                dump("Файл .env не найден");
+//            }
 
             $entity = $request->input('entity');
             $filters = $request->input('filters', []);
