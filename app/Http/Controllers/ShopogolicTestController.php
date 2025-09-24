@@ -54,7 +54,7 @@ class ShopogolicTestController extends Controller
              * */
 
             $request->validate([
-                'entity' => 'required|string|in:warehouses,couriers,orders,parcels,countries,regions,cities,hsCodes,users,addresses',
+                'entity' => 'required|string|in:warehouses,couriers,orders,parcels,countries,regions,cities,hsCodes,users,addresses,calculate',
                 'filters' => 'nullable|array',
             ]);
 
@@ -76,6 +76,7 @@ class ShopogolicTestController extends Controller
                 'couriers' => $provider->getCouriers($filters),
                 'orders' => $provider->getOrders($filters),
                 'parcels' => $provider->getParcels($filters),
+                'calculate' => $provider->calculateShipping($filters),
                 'countries' => $provider->getCountries(
                     $filters['per_page'] ?? 20,
                     $filters['page'] ?? 1
