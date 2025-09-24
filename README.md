@@ -98,6 +98,17 @@
 
 ---
 
+## 🔌 Модуль адаптер с внешним сервисом Shopogolic
+Для работы модуля нужно настроить в `.env` переменные
+
+    SHOPOGOLIC_BASE_URL=https://shopogolic.net/api
+    SHOPOGOLIC_AUTH_KEY=
+    SHOPOGOLIC_TIMEOUT=30
+    SHOPOGOLIC_LOG_ENABLED=true
+    SHOPOGOLIC_LOG_CHANNEL=stack
+
+---
+
 ## 🔐 SSO-аутентификация
 
 ### Предварительная настройка
