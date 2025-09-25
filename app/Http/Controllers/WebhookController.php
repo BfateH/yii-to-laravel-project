@@ -75,14 +75,13 @@ class WebhookController extends Controller
                     'reason' => $result['message'] ?? 'No message'
                 ]);
                 return response('OK', 200);
-
             case 'error':
             default:
                 $message = $result['message'] ?? 'Unknown error';
                 Log::error("TelegramWebhookController: Telegram alert webhook processing failed.", [
                     'error_message' => $message
                 ]);
-                return response('Bad Request: ' . $message, 400);
+                return response('OK', 200);
         }
     }
 }
