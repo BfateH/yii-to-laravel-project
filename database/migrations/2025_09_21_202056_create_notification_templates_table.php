@@ -39,8 +39,16 @@ return new class extends Migration
                     $templates[] = [
                         'key' => 'ticket_created',
                         'channel_id' => $channel->id,
-                        'subject' => 'Новый тикет #{id}',
-                        'body' => "Создан новый тикет #{id}.<br>Тема: {subject}<br>Ссылка: {ticket_link}",
+                        'subject' => 'Новый тикет #{{id}}',
+                        'body' => "Создан новый тикет #{{id}}.<br>Тема: {subject}<br>Ссылка: {ticket_link}",
+                        'created_at' => now(),
+                        'updated_at' => now()
+                    ];
+                    $templates[] = [
+                        'key' => 'ticket_message_created',
+                        'channel_id' => $channel->id,
+                        'subject' => 'Новое сообщение в тикете #{{ticket_id}}',
+                        'body' => "Новое сообщение в тикете #{{ticket_id}}<br>Сообщение: {message}",
                         'created_at' => now(),
                         'updated_at' => now()
                     ];
@@ -50,8 +58,16 @@ return new class extends Migration
                     $templates[] = [
                         'key' => 'ticket_created',
                         'channel_id' => $channel->id,
-                        'subject' => 'Новый тикет #{id}',
-                        'body' => "Создан новый тикет #{id}\nТема: {subject}\nСсылка: {ticket_link}",
+                        'subject' => 'Новый тикет #{{id}}',
+                        'body' => "Создан новый тикет #{{id}}\nТема: {subject}\nСсылка: {ticket_link}",
+                        'created_at' => now(),
+                        'updated_at' => now()
+                    ];
+                    $templates[] = [
+                        'key' => 'ticket_message_created',
+                        'channel_id' => $channel->id,
+                        'subject' => 'Новое сообщение в тикете #{{ticket_id}}',
+                        'body' => "Новое сообщение в тикете #{{ticket_id}}\n\nСообщение: {message}",
                         'created_at' => now(),
                         'updated_at' => now()
                     ];
@@ -62,7 +78,15 @@ return new class extends Migration
                         'key' => 'ticket_created',
                         'channel_id' => $channel->id,
                         'subject' => null,
-                        'body' => "🔔 Новый тикет #{id}\n\nТема: {subject}\nСсылка: {ticket_link}",
+                        'body' => "🔔 Новый тикет #{{id}}\n\nТема: {subject}\nСсылка: {ticket_link}",
+                        'created_at' => now(),
+                        'updated_at' => now()
+                    ];
+                    $templates[] = [
+                        'key' => 'ticket_message_created',
+                        'channel_id' => $channel->id,
+                        'subject' => null,
+                        'body' => "🔔 Новое сообщение в тикете #{{ticket_id}}\n\nСообщение: {message}",
                         'created_at' => now(),
                         'updated_at' => now()
                     ];

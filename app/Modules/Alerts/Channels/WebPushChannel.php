@@ -37,7 +37,7 @@ class WebPushChannel implements ChannelInterface
      * @param Alert $alert
      * @return bool
      */
-    public function send(Alert $alert): bool
+    public function send(Alert $alert, $toCurrentUser = false): bool
     {
         try {
             if (!$this->isUserSubscribedToWebPush($alert->user_id)) {
@@ -166,6 +166,7 @@ class WebPushChannel implements ChannelInterface
     protected function parseTemplate(string $template, array $data): string
     {
         foreach ($data as $key => $value) {
+            if ($key === 'attachments') continue;
             $template = str_replace('{' . $key . '}', $value, $template);
         }
         return $template;
