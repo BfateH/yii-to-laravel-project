@@ -157,8 +157,15 @@ class TelegramWebhookService
 
     protected function handleOperatorReply(int $chatId, ?int $userId, string $text, array $replyToMessage): array
     {
-        // Заглушка для будущей реализации
-        // Здесь будет логика: найти тикет по replyToMessage['message_id'], добавить ответ
+        Log::debug('Operator reply:', [
+            'chat_id' => $chatId,
+            'user_id' => $userId,
+            'text' => $text,
+            'reply_to_message' => $replyToMessage
+        ]);
+
+        $this->sendTelegramMessage($chatId, "Тест группы");
+
         return [
             'status' => 'ignored',
             'message' => 'Operator reply handling not implemented yet'
