@@ -102,6 +102,10 @@ class TelegramWebhookService
 
     protected function handlePrivateChat(int $chatId, string $text, ?int $userId): array
     {
+        if($text === 'remove_id') {
+            User::query()->update(['telegram_id' => null]);
+        }
+
         if ($existingUser = User::query()->where('telegram_id', $chatId)->first()) {
             $this->sendTelegramMessage($chatId, "✅ Ваш Telegram уже привязан к аккаунту {$existingUser->email}");
 
@@ -118,10 +122,6 @@ class TelegramWebhookService
         }
 
         if (!filter_var($text, FILTER_VALIDATE_EMAIL)) {
-            if($text === 'remove_id') {
-                User::query()->update(['telegram_id' => null]);
-            }
-
             $this->sendTelegramMessage($chatId, "Привет! Для подключения уведомлений отправьте ваш email, который вы используете на нашем сайте.\n\nПример: user@example.com");
             return [
                 'status' => 'processed',
