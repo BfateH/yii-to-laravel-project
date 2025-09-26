@@ -59,6 +59,13 @@ class WebhookController extends Controller
 
     public function handleTelegramAlert(Request $request, TelegramWebhookService $telegramWebhookService): Response
     {
+        $webhook_secret = config('services.telegram.webhook_secret');
+        $secretToken = $request->header('X-Telegram-Bot-Api-Secret-Token');
+        if ($secretToken !== $webhook_secret) {
+            Log::warning('Webhook request with invalid secret token: ' . ($secretToken ?? 'NULL'));
+            return response('OK', 200);
+        }
+
         $payload = $request->all();
 
         Log::debug('Webhook payload', ['payload' => $payload]);
@@ -82,6 +89,27 @@ class WebhookController extends Controller
                     'error_message' => $message
                 ]);
                 return response('OK', 200);
+        }
+    }
+
+    public function setTelegramWebhook(Request $request, TelegramWebhookService $telegramWebhookService): \Illuminate\Http\JsonResponse
+    {
+        $webhookUrl = route('webhook.alerts.telegram');
+        $secretToken = config('services.telegram.webhook_secret');
+        $result = $telegramWebhookService->setWebhook($webhookUrl, $secretToken);
+
+        if ($result['success']) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Вебхук успешно установлен!',
+                'telegram_api_result' => $result['result']
+            ], 200);
+        } else {
+            $errorMessage = "Ошибка при установке вебхука: " . $result['message'];
+            return response()->json([
+                'success' => false,
+                'message' => $errorMessage
+            ], 500);
         }
     }
 }

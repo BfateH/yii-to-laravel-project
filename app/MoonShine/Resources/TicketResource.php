@@ -15,6 +15,7 @@ use App\MoonShine\Pages\Ticket\TicketDetailPage;
 use App\MoonShine\Pages\Ticket\TicketFormPage;
 use App\MoonShine\Pages\Ticket\TicketIndexPage;
 use App\MoonShine\Resources\users\CommonUserResource;
+use App\MoonShine\Resources\users\PartnerResource;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -43,7 +44,7 @@ class TicketResource extends ModelResource
     protected string $model = Ticket::class;
     protected string $title = 'Поддержка';
     protected bool $usePagination = true;
-    protected int $itemsPerPage = 10;
+    protected int $itemsPerPage = 5;
 
     protected function activeActions(): ListOf
     {
@@ -56,7 +57,16 @@ class TicketResource extends ModelResource
     {
         $currentUser = Auth::user();
 
-        if (!$currentUser->isAdminRole()) {
+        if ($currentUser->isPartnerRole()) {
+            $builder->where(function ($query) use ($currentUser) {
+                $query->where('user_id', $currentUser->id)
+                    ->orWhereHas('user', function ($userQuery) use ($currentUser) {
+                        $userQuery->where('partner_id', $currentUser->id); // Тикеты пользователей, привязанных к партнёру
+                    });
+            });
+        }
+
+        if ($currentUser->isDefaultUserRole()) {
             $builder->where('user_id', $currentUser->id);
         }
 
@@ -75,12 +85,13 @@ class TicketResource extends ModelResource
 
         return [
             ID::make('ID обращения', 'id')->sortable(),
+
             Text::make('Новые сообщения', formatted: function (Ticket $ticket) use ($currentUser) {
-                if($currentUser->isAdminRole()){
+                if ($currentUser->isAdminRole() || $currentUser->isPartnerRole()) {
                     return $ticket->messages()->where('id', '>', $ticket->last_admin_message_read)->count();
-                } else {
-                    return $ticket->messages()->where('id', '>', $ticket->last_user_message_read)->count();
                 }
+
+                return $ticket->messages()->where('id', '>', $ticket->last_user_message_read)->count();
             })->badge(color: Color::RED),
 
             BelongsTo::make(
@@ -90,7 +101,25 @@ class TicketResource extends ModelResource
                 resource: CommonUserResource::class,
             )
                 ->valuesQuery(fn(Builder $query) => $query->whereIn('role_id', [Role::partner->value, Role::user->value]))
-                ->canSee(fn() => $currentUser->isAdminRole()),
+                ->canSee(fn() => $currentUser->isAdminRole() || $currentUser->isPartnerRole()),
+
+            BelongsTo::make(
+                __('Партнер'),
+                'user',
+                formatted: function (User $user) {
+                    $partner = $user->partner;
+
+                    if ($partner) {
+                        return $partner->email;
+                    }
+
+                    return '';
+                },
+                resource: CommonUserResource::class,
+            )
+                ->valuesQuery(fn(Builder $query) => $query->whereIn('role_id', [Role::partner->value, Role::user->value]))
+                ->canSee(fn() => $currentUser->isAdminRole())
+                ->badge(color: Color::INFO),
 
             Enum::make('Категория обращения', 'category')
                 ->attach(TicketCategory::class)
@@ -101,6 +130,36 @@ class TicketResource extends ModelResource
                 ->sortable()->badge(fn($status, Enum $field) => TicketStatus::tryFrom($status)?->color()),
 
             Text::make('Тема обращения', 'subject'),
+        ];
+    }
+
+    protected function filters(): iterable
+    {
+        $currentUser = Auth::user();
+
+        return [
+            BelongsTo::make(
+                __('Партнер'),
+                'user',
+                formatted: function (User $user) {
+                    return $user->email . ' - ' . $user->name;
+                },
+                resource: PartnerResource::class,
+            )
+                ->valuesQuery(fn(Builder $query) => $query->whereIn('role_id', [Role::partner->value]))
+                ->nullable()
+                ->asyncSearch()
+                ->asyncOnInit()
+                ->canSee(fn() => $currentUser->isAdminRole())
+                ->badge(color: Color::INFO)
+                ->onApply(function (Builder $query, $value, BelongsTo $field) {
+                    if ($value) {
+                        return $query->whereHas('user', function ($userQuery) use ($value) {
+                            $userQuery->where('partner_id', $value);
+                        });
+                    }
+                    return $query;
+                }),
         ];
     }
 
@@ -133,12 +192,34 @@ class TicketResource extends ModelResource
     {
         $item = parent::findItem($orFail);
         $currentUser = Auth::user();
+        $canAccess = false;
 
-        if (!$currentUser->isAdminRole() && $item && $item->user_id !== $currentUser->id) {
-            if ($orFail) {
-                abort(404, 'Сущность не найдена или не разрешена для этого ресурса.');
+        // Собственные тикеты
+        if ($currentUser->id === $item->user_id) {
+            $canAccess = true;
+        }
+
+        // Админу все
+        if ($currentUser->isAdminRole()) {
+            $canAccess = true;
+        }
+
+        // Партнёру ещё тикеты его пользователей
+        if ($currentUser->isPartnerRole()) {
+            $ticketOwner = $item->user;
+
+            if ($ticketOwner && $ticketOwner->partner_id == $currentUser->id) {
+                $canAccess = true;
             }
-            return null;
+        }
+
+        if ($item) {
+            if (!$canAccess) {
+                if ($orFail) {
+                    abort(404, 'Сущность не найдена или не разрешена для этого ресурса.');
+                }
+                return null;
+            }
         }
 
         return $item;
@@ -178,15 +259,11 @@ class TicketResource extends ModelResource
     {
         $currentUser = Auth::user();
 
-        if(!$currentUser->isAdminRole()){
+        if (!$currentUser->isAdminRole()) {
             $ticket = Ticket::query()->find($item->id);
 
             $websocketService = app(WebSocketService::class);
             $websocketService->broadcastTicketCreated($ticket);
-
-            $alertService = app(AlertService::class);
-
-            $admins = User::query()->where('role_id', Role::admin->value)->get();
 
             $ticketData = [
                 'id' => $ticket->id,
@@ -194,12 +271,27 @@ class TicketResource extends ModelResource
                 'ticket_link' => '<a href="' . $this->getDetailPageUrl($item->id) . '">Перейти</a>',
             ];
 
-            foreach ($admins as $admin) {
-                try {
-                    $alertService->send('ticket_created', $admin, $ticketData);
-                } catch (\Exception $exception) {
-                    Log::error('Sent to admin failed: ' . $exception->getMessage());
+            $alertService = app(AlertService::class);
+
+            if ($currentUser->isDefaultUserRole()) {
+                $partner = $currentUser->partner;
+
+                if ($partner) {
+                    $alertService->send('ticket_created', $partner, $ticketData);
+                } else {
+                    $admins = User::query()->where('role_id', Role::admin->value);
+                    foreach ($admins as $admin) {
+                        try {
+                            $alertService->send('ticket_created', $admin, $ticketData);
+                        } catch (\Exception $exception) {
+                            Log::error('Sent to admin failed: ' . $exception->getMessage());
+                        }
+                    }
                 }
+            }
+
+            if ($currentUser->isPartnerRole()) {
+                $alertService->send('ticket_created', $currentUser, $ticketData);
             }
         }
 
@@ -212,7 +304,7 @@ class TicketResource extends ModelResource
         $item = Ticket::query()->find($itemId);
         $canCloseItem = $this->canCloseItem($item);
 
-        if(!$canCloseItem) {
+        if (!$canCloseItem) {
             return MoonShineJsonResponse::make()
                 ->toast('Тикет уже закрыт или у вас нет прав.', ToastType::ERROR);
         }
@@ -242,12 +334,20 @@ class TicketResource extends ModelResource
 
         $isCanUpdate = false;
 
-        if($currentUser->id === $item->id) {
+        if ($currentUser->id === $item->user_id) {
             $isCanUpdate = true;
         }
 
-        if($currentUser->isAdminRole()) {
+        if ($currentUser->isAdminRole()) {
             $isCanUpdate = true;
+        }
+
+        if ($currentUser->isPartnerRole()) {
+            $partner = $item->user->partner;
+
+            if ($partner && $partner->id === $currentUser->id) {
+                $isCanUpdate = true;
+            }
         }
 
         return $isOpenStatus && $isCanUpdate;

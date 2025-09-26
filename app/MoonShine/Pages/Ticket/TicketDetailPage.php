@@ -73,13 +73,15 @@ class TicketDetailPage extends DetailPage
      */
     protected function fields(): iterable
     {
+        $currentUser = Auth::user();
+
         return [
             BelongsTo::make(
                 'Пользователь',
                 'user',
                 formatted: fn(User $user) => $user->name,
                 resource: CommonUserResource::class
-            )->canSee(fn() => Auth::user()->isAdminRole()),
+            )->canSee(fn() => $currentUser->isAdminRole() || $currentUser->isPartnerRole()),
 
             Enum::make('Категория обращения', 'category')
                 ->attach(TicketCategory::class)

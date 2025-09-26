@@ -10,6 +10,7 @@ use App\Modules\SupportChat\Resources\MessageResource;
 use App\Modules\SupportChat\Services\MessageService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
@@ -25,12 +26,14 @@ class TicketMessageController extends Controller
     /**
      *
      * @param Ticket $ticket
-     * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection|JsonResponse
+     * @return AnonymousResourceCollection|JsonResponse
      */
-    public function index(Ticket $ticket): JsonResponse|\Illuminate\Http\Resources\Json\AnonymousResourceCollection
+    public function index(Ticket $ticket): JsonResponse|AnonymousResourceCollection
     {
-        $user = Auth::user();
-        if (!$user || ($ticket->user_id !== $user->id && !$user->isAdminRole())) {
+        $user = User::query()->findOrFail(Auth::id());
+        $canAccess = $this->canAccessTicket($ticket, $user);
+
+        if (!$canAccess) {
             return response()->json(['error' => 'Доступ запрещен.'], 403);
         }
 
@@ -39,7 +42,7 @@ class TicketMessageController extends Controller
             $lastMessage = $messages->last();
 
             if ($lastMessage) {
-                if ($user->isAdminRole()) {
+                if ($user->isAdminRole() || $user->isPartnerRole()) {
                     $ticket->update(['last_admin_message_read' => $lastMessage->id]);
                 } else {
                     $ticket->update(['last_user_message_read' => $lastMessage->id]);
@@ -56,8 +59,9 @@ class TicketMessageController extends Controller
     public function store(Request $request, Ticket $ticket): MessageResource|JsonResponse
     {
         $user = User::query()->findOrFail(Auth::id());
+        $canAccess = $this->canAccessTicket($ticket, $user);
 
-        if (!$user || ($ticket->user_id !== $user->id && !$user->isAdminRole())) {
+        if (!$canAccess) {
             return response()->json(['error' => 'Доступ запрещен.'], 403);
         }
 
@@ -109,5 +113,23 @@ class TicketMessageController extends Controller
             ]);
             return response()->json(['error' => 'Ошибка сервера при отправке сообщения: ' . $e->getMessage()], 500);
         }
+    }
+
+    protected function canAccessTicket(Ticket $ticket, User $user): bool
+    {
+        $canAccess = false;
+
+        if ($user && ($user->isAdminRole() || ($ticket->user_id === $user->id))) {
+            $canAccess = true;
+        }
+
+        if($user && $user->isPartnerRole()) {
+            $partner = $ticket->user->partner;
+            if($partner && $partner->id === $user->id) {
+                $canAccess = true;
+            }
+        }
+
+        return $canAccess;
     }
 }

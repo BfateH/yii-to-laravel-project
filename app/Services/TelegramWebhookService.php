@@ -9,10 +9,67 @@ use App\Models\User;
 
 class TelegramWebhookService
 {
+    public function setWebhook(string $webhookUrl, ?string $secretToken = null): array
+    {
+        $botToken = config('services.telegram.bot_token');
+
+        if (!$botToken) {
+            Log::error('TelegramWebhookService: BOT token not configured for setWebhook');
+            return [
+                'success' => false,
+                'message' => 'Bot token is not configured.'
+            ];
+        }
+
+        $apiUrl = 'https://api.telegram.org/bot' . $botToken . '/setWebhook';
+        $params = [
+            'url' => $webhookUrl,
+        ];
+
+        if ($secretToken) {
+            $params['secret_token'] = $secretToken;
+        }
+
+        $response = Http::timeout(30)->post($apiUrl, $params);
+
+        if (!$response->successful()) {
+            Log::error('TelegramWebhookService: Failed to set webhook', [
+                'status_code' => $response->status(),
+                'response_body' => $response->body()
+            ]);
+            return [
+                'success' => false,
+                'message' => 'HTTP Error: ' . $response->status() . ' - ' . $response->body()
+            ];
+        }
+
+        $responseData = $response->json();
+        if (!isset($responseData['ok']) || !$responseData['ok']) {
+            Log::error('TelegramWebhookService: Telegram API error setting webhook', [
+                'api_response' => $responseData
+            ]);
+            return [
+                'success' => false,
+                'message' => 'Telegram API Error: ' . ($responseData['description'] ?? 'Unknown error')
+            ];
+        }
+
+        Log::info('TelegramWebhookService: Webhook set successfully', [
+            'webhook_url' => $webhookUrl,
+            'has_secret_token' => (bool) $secretToken
+        ]);
+
+        return [
+            'success' => true,
+            'message' => 'Webhook set successfully.',
+            'result' => $responseData['result'] ?? null
+        ];
+    }
+
     public function sendTelegramMessage(string $chatId, string $text): void
     {
         try {
-            $botToken = config('services.telegram.bot_token') ?? '7551395829:AAF1n3G1ofz8ZNkUWepnsrwktZFNms7dCb0';
+            $botToken = config('services.telegram.bot_token');
 
             if (!$botToken) {
                 Log::error('TelegramWebhookService: BOT token not configured');
@@ -163,7 +220,7 @@ class TelegramWebhookService
             'text' => $text,
             'reply_to_message' => $replyToMessage
         ]);
-
+//        TODO here
         $this->sendTelegramMessage($chatId, "Тест группы");
 
         return [

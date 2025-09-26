@@ -3,6 +3,7 @@
 namespace App\Events\SupportChat;
 
 use App\Models\TicketMessage;
+use App\Models\User;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
@@ -22,10 +23,24 @@ class MessageSent implements ShouldBroadcast
 
     public function broadcastOn(): array
     {
-        return [
+        $channels = [
             new PrivateChannel('ticket.' . $this->message->ticket_id),
             new PrivateChannel('admin.tickets'),
         ];
+
+        $ticketUser = $this->message->user;
+        if($ticketUser && $ticketUser->isPartnerRole()) {
+            $channels[] = new PrivateChannel("partner.{$ticketUser->id}.tickets");
+        }
+
+        if($ticketUser && $ticketUser->isDefaultUserRole()) {
+            $partnerUser = $ticketUser->partner;
+            if($partnerUser) {
+                $channels[] = new PrivateChannel("partner.{$partnerUser->id}.tickets");
+            }
+        }
+
+        return $channels;
     }
 
     public function broadcastWith(): array

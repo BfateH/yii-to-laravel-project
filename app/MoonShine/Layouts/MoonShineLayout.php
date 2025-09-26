@@ -36,32 +36,21 @@ final class MoonShineLayout extends AppLayout
 {
     protected function assets(): array
     {
+        $currentUser = Auth::user();
+
         $assets = [
             ...parent::assets(),
-            Js::make(Vite::asset('resources/js/moonshine-echo.js'))->setAttribute('type', 'module'),
-            Js::make(Vite::asset('resources/js/webpush.js'))->setAttribute('type', 'module'),
-        ];
+            InlineJs::make(
+            'window.MoonShineApp = window.MoonShineApp || {}; ' .
+            'window.MoonShineApp.currentUserId = ' . (int)$currentUser->id . '; ' .
+            'window.MoonShineApp.userRole = ' . $currentUser->role_id . ';'
+        )];
 
-        $currentUser = Auth::user();
-        if ($currentUser->isAdminRole()) {
-            $assets[] = InlineJs::make(
-                'document.addEventListener("DOMContentLoaded", function() {' .
-                '    const echoChannel = window.Echo.private(`admin.tickets`);' .
-                '    echoChannel.listen(".ticket.created", (res) => {' .
-                '        if (res.ticket) {' .
-                '            MoonShine.ui.toast(`Создан новый тикет #${res.ticket.id}`, "success", 0)' .
-                '        }' .
-                '    });' .
-                '    echoChannel.listen(".message.sent", (res) => {' .
-                '        if (res.message) {' .
-                '            if (+res.message.user.id !== ' . $currentUser->id . ') {' .
-                '                MoonShine.ui.toast(`Новое сообщение в Тикет #${res.message.ticket_id}`, "success", 0)' .
-                '            }' .
-                '        }' .
-                '    });' .
-                '});'
-            );
-        }
+        $assets = array_merge($assets, [
+            Js::make(Vite::asset('resources/js/moonshine-echo.js'))->setAttribute('type', 'module'),
+            Js::make(Vite::asset('resources/js/admin-echo-listener.js'))->setAttribute('type', 'module'),
+            Js::make(Vite::asset('resources/js/webpush.js'))->setAttribute('type', 'module'),
+        ]);
 
         return $assets;
     }

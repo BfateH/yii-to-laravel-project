@@ -99,7 +99,7 @@ class TelegramChannel implements ChannelInterface
 
     protected function createAttachmentsArchive(array $attachments): ?string
     {
-        $fileName = 'ticket_attachments_' . now()->format('Y-m-d_H-i-s') . '_' . uniqid() . '.zip';
+        $fileName = 'attachments_' . now()->format('Y-m-d_H-i-s') . '_' . uniqid() . '.zip';
         $absolutePath = storage_path('app/private/' . $fileName);
 
         $outputStream = fopen($absolutePath, 'wb');

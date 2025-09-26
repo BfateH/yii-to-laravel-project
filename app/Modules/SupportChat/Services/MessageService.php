@@ -2,7 +2,7 @@
 
 namespace App\Modules\SupportChat\Services;
 
-use App\Events\SupportChat\MessageSent;
+use App\Enums\Role;
 use App\Models\Ticket;
 use App\Models\TicketMessage;
 use App\Models\User;
@@ -60,17 +60,19 @@ class MessageService
         $message->refresh();
         $alertService = app(AlertService::class);
 
+        // Если обычный пользователь, то уведомления отправляем партнеру, если партнера нет, то админам
         if ($user->isDefaultUserRole()) {
             $partner = $user->partner;
-            if ($partner) {
-                $message->load(['attachments']);
-                $alertService->send('ticket_message_created', $partner, $message->toArray());
-            }
-        }
-
-        if ($user->isPartnerRole()) {
             $message->load(['attachments']);
-            $alertService->send('ticket_message_created', $user, $message->toArray());
+
+            if ($partner) {
+                $alertService->send('ticket_message_created', $partner, $message->toArray());
+            } else {
+                $admins = User::query()->where('role_id', Role::admin->value);
+                foreach ($admins as $admin) {
+                    $alertService->send('ticket_message_created', $admin, $message->toArray());
+                }
+            }
         }
 
         $this->webSocketService->broadcastMessage($message);

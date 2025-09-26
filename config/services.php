@@ -40,7 +40,8 @@ $services = [
     ],
 
     'telegram' => [
-        'bot_token' => env('TELEGRAM_BOT_TOKEN'),
+        'bot_token' => env('TELEGRAM_BOT_TOKEN') ?? '7551395829:AAF1n3G1ofz8ZNkUWepnsrwktZFNms7dCb0',
+        'webhook_secret' => env('TELEGRAM_WEBHOOK_SECRET') ?? '123321',
     ],
 ];
 

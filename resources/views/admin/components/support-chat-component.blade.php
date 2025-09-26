@@ -54,6 +54,7 @@
 
     <div style="display: none;"
          data-is-admin="{{ $isAdmin }}"
+         data-ticket-status="{{ $ticket->status }}"
          data-current-user-id="{{ $currentUser->id }}"
          data-load-messages-url="{{ route('moonshine.tickets.messages.index', $ticketId) }}"
          data-send-message-url="{{ route('moonshine.tickets.messages.store', $ticketId) }}"
@@ -72,6 +73,7 @@
         }
 
         const isAdmin = +chatWrapper.querySelector('[data-is-admin]').dataset.isAdmin;
+        const ticketStatus = chatWrapper.querySelector('[data-ticket-status]').dataset.ticketStatus;
         const currentUserId = chatWrapper.querySelector('[data-current-user-id]').dataset.currentUserId;
         const loadMessagesUrl = chatWrapper.querySelector('[data-load-messages-url]').dataset.loadMessagesUrl;
         const sendMessageUrl = chatWrapper.querySelector('[data-send-message-url]').dataset.sendMessageUrl;
@@ -308,7 +310,7 @@
 
                 echoChannel.listen('.ticket.status.changed', (res) => {
                     if (res.ticket) {
-                        if(res.ticket.status === 'closed') {
+                        if(res.ticket.status === 'closed' && ticketStatus !== 'closed') {
                             alert('Тикет был закрыт')
                             window.location.reload()
                         }

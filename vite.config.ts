@@ -13,6 +13,7 @@ export default defineConfig({
             input: [
                 'resources/js/app.ts',
                 'resources/js/moonshine-echo.js',
+                'resources/js/admin-echo-listener.js',
                 'resources/js/webpush.js',
                 'resources/css/support-chat.css',
             ],
