@@ -97,11 +97,11 @@ class TelegramWebhookService
     {
         try {
             if (isset($payload['message'])) {
-                return $this->handleMessage($payload['message']);
+                return $this->handleMessage($payload['message'], $payload);
             }
 
             if (isset($payload['callback_query'])) {
-                return $this->handleCallback($payload['callback_query']);
+                return $this->handleCallback($payload['callback_query'], $payload);
             }
 
             return [
@@ -122,7 +122,7 @@ class TelegramWebhookService
         }
     }
 
-    protected function handleMessage(array $message): array
+    protected function handleMessage(array $message, $payload): array
     {
         $chatId = $message['chat']['id'] ?? null;
         $text = $message['text'] ?? '';
@@ -138,7 +138,7 @@ class TelegramWebhookService
 
         // Поддержка партнёров тут
         if (str_starts_with((string) $chatId, '-100')) {
-            return $this->handleSupergroup($chatId, $text, $userId, $message);
+            return $this->handleSupergroup($chatId, $text, $userId, $message, $payload);
         }
 
         return [
@@ -147,7 +147,7 @@ class TelegramWebhookService
         ];
     }
 
-    protected function handleCallback(array $callback): array
+    protected function handleCallback(array $callback, $payload): array
     {
         Log::info('TelegramWebhookService: Callback received (not implemented)', $callback);
 
@@ -190,7 +190,7 @@ class TelegramWebhookService
         return $this->linkTelegramByEmailAddress($chatId, $text);
     }
 
-    protected function handleSupergroup(int $chatId, string $text, ?int $userId, array $message): array
+    protected function handleSupergroup(int $chatId, string $text, ?int $userId, array $message, $payload): array
     {
         // Находим партнёра, к которому привязана эта группа
         $partner = User::query()
@@ -209,18 +209,20 @@ class TelegramWebhookService
             ];
         }
 
-        return $this->handleOperatorReply($chatId, $userId, $text, $message['reply_to_message']);
+        return $this->handleOperatorReply($chatId, $userId, $text, $message['reply_to_message'], $payload);
     }
 
-    protected function handleOperatorReply(int $chatId, ?int $userId, string $text, array $replyToMessage): array
+    protected function handleOperatorReply(int $chatId, ?int $userId, string $text, array $replyToMessage, $payload): array
     {
         Log::debug('Operator reply:', [
             'chat_id' => $chatId,
             'user_id' => $userId,
             'text' => $text,
-            'reply_to_message' => $replyToMessage
+            'payload' => $payload
         ]);
-//        TODO here
+
+
+
         $this->sendTelegramMessage($chatId, "Тест группы");
 
         return [
