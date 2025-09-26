@@ -453,7 +453,7 @@ class TelegramWebhookService
         }
 
         if(!$originalFileName) {
-            $originalFileName = basename($tempFilePath);
+            $originalFileName = basename($filePath);
         }
 
         return new UploadedFile(
