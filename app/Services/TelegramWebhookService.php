@@ -295,6 +295,9 @@ class TelegramWebhookService
                         }
                     }
                 } catch (\Exception $e) {
+                    Log::error('TelegramWebhookService: Operator reply failed: ', [
+                        'error' => $e->getMessage(),
+                    ]);
                     $isSuccess = false;
                 }
 
