@@ -270,7 +270,7 @@ class TelegramWebhookService
 
                     // Сообщение файл
                     if (trim($messageText) === '' && isset($payload['message']['document'])) {
-                        $caption = $payload['message']['document']['caption'] ?? 'Вложение';
+                        $caption = $payload['message']['caption'] ?? 'Вложение';
                         $fileId = $payload['message']['document']['file_id'] ?? null;
                         $fileName = $payload['message']['document']['file_name'] ?? null;
 
@@ -282,6 +282,10 @@ class TelegramWebhookService
                         if ($fileId && $fileName) {
                             $uploadedFile = $this->downloadFileFromTelegram($fileId, $fileName);
                             $messageData['attachments'][] = $uploadedFile;
+
+                            Log::debug('TelegramWebhookService: Telegram message_data', [
+                                'message_data' => $messageData
+                            ]);
 
                             $messageService->sendMessage(
                                 $ticket,
