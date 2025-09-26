@@ -221,13 +221,20 @@ class TelegramWebhookService
             'payload' => $payload
         ]);
 
+        // Проверяем, что отвечаем на сообщение бота
+        if(isset($replyToMessage['from']['is_bot']) && $replyToMessage['from']['is_bot'] === true) {
+            $this->sendTelegramMessage($chatId, "Тест только боту группы");
 
-
-        $this->sendTelegramMessage($chatId, "Тест группы");
+            return [
+                'status' => 'processed',
+                'chat_id' => $chatId,
+                'message' => 'Operator reply successfully'
+            ];
+        }
 
         return [
             'status' => 'ignored',
-            'message' => 'Operator reply handling not implemented yet'
+            'message' => 'Operator reply on not bot'
         ];
     }
 
