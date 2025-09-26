@@ -32,10 +32,6 @@ class MessageService
 
         $message = $this->messageRepository->create($data);
 
-        Log::debug('USER MESSAGE:', [
-            'user' => $user,
-        ]);
-
         if ($user->isAdminRole() || $user->isPartnerRole()) {
             $ticket->last_admin_message_read = $message->id;
         } else {

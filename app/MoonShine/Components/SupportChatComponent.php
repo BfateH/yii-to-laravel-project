@@ -41,7 +41,7 @@ final class SupportChatComponent extends MoonShineComponent
         return [
             'ticket' => $this->ticket,
             'currentUser' => $this->currentUser,
-            'isAdmin' => $this->currentUser->isAdminRole() ? 1 : 0,
+            'isAdmin' => $this->currentUser->isAdminRole() || $this->currentUser->isPartnerRole() ? 1 : 0,
             'ticketId' => $this->ticket->id,
         ];
     }
