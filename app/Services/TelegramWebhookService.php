@@ -269,7 +269,7 @@ class TelegramWebhookService
                         $this->sendTelegramMessage($chatId, "✅ Ответ отправлен в тикет #{$ticketId}");
                     }
 
-                    // Сообщение файл
+                    // Сообщение файл с типом document
                     if (trim($messageText) === '' && isset($payload['message']['document'])) {
                         $caption = $payload['message']['caption'] ?? 'Вложение';
                         $fileId = $payload['message']['document']['file_id'] ?? null;
@@ -293,6 +293,48 @@ class TelegramWebhookService
                             unlink($uploadedFile->getPathname());
                             $isSuccess = true;
                             $this->sendTelegramMessage($chatId, "✅ Файл $fileName отправлен в тикет #{$ticketId}");
+                        } else {
+                            $this->sendTelegramMessage($chatId, "❌ Файл $fileName не отправлен в тикет #{$ticketId}");
+                        }
+                    }
+
+                    // Сообщение файл с типом photo
+                    if (trim($messageText) === '' && isset($payload['message']['photo'])) {
+                        $caption = $payload['message']['caption'] ?? 'Вложение';
+                        $photoData = $payload['message']['photo'];
+                        $fileId = null;
+
+                        if (is_array($photoData) && !empty($photoData)) {
+                            $lastPhoto = end($photoData);
+                        } else {
+                            $lastPhoto = null;
+                        }
+
+                        if ($lastPhoto) {
+                            $fileId = $lastPhoto['file_id'];
+                            $isSuccess = true;
+                        } else {
+                            $isSuccess = false;
+                        }
+
+                        if($isSuccess && $fileId) {
+                            $messageData = [
+                                'message' => $caption,
+                                'attachments' => []
+                            ];
+
+                            $uploadedFile = $this->downloadFileFromTelegram($fileId);
+                            $messageData['attachments'][] = $uploadedFile;
+
+                            $messageService->sendMessage(
+                                $ticket,
+                                $messageData,
+                                $partner
+                            );
+
+                            unlink($uploadedFile->getPathname());
+                            $isSuccess = true;
+                            $this->sendTelegramMessage($chatId, "✅ Файл {$uploadedFile->getClientOriginalName()} отправлен в тикет #{$ticketId}");
                         }
                     }
                 } catch (\Exception $e) {
@@ -331,7 +373,7 @@ class TelegramWebhookService
         return 0;
     }
 
-    protected function downloadFileFromTelegram(string $fileId, string $originalFileName): ?UploadedFile
+    protected function downloadFileFromTelegram(string $fileId, string $originalFileName = null): ?UploadedFile
     {
         $botToken = config('services.telegram.bot_token');
         if (!$botToken) {
@@ -408,6 +450,10 @@ class TelegramWebhookService
                 'is_readable' => is_readable($tempFilePath),
             ]);
             return null;
+        }
+
+        if(!$originalFileName) {
+            $originalFileName = basename($tempFilePath);
         }
 
         return new UploadedFile(
