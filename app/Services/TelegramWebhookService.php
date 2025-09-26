@@ -385,7 +385,8 @@ class TelegramWebhookService
         }
 
         $fileContents = $fileContentsResponse->body();
-        $tempFilePath = storage_path('app/private/' . $filePath);
+        $fileNameFromPath = basename($filePath);
+        $tempFilePath = storage_path('app/private/' . $fileNameFromPath);
 
         if ($tempFilePath === false) {
             Log::error('TelegramWebhookService: Could not create temporary file');
