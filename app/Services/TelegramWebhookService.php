@@ -283,10 +283,6 @@ class TelegramWebhookService
                             $uploadedFile = $this->downloadFileFromTelegram($fileId, $fileName);
                             $messageData['attachments'][] = $uploadedFile;
 
-                            Log::debug('TelegramWebhookService: Telegram message_data', [
-                                'message_data' => $messageData
-                            ]);
-
                             $messageService->sendMessage(
                                 $ticket,
                                 $messageData,

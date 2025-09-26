@@ -53,6 +53,11 @@ class MessageService
                             'file_type' => $file->getMimeType()
                         ]);
                     }
+                } else {
+                    Log::warning('Error uploading attachment: ', [
+                        'file' => $file,
+                        'error' => $file->getError()
+                    ]);
                 }
             }
         }
