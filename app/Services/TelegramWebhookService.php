@@ -223,7 +223,7 @@ class TelegramWebhookService
 
         // Проверяем, что отвечаем на сообщение бота
         if (isset($replyToMessage['from']['is_bot']) && $replyToMessage['from']['is_bot'] === true) {
-            $replyText = $replyToMessage['text'] ?? '';
+            $replyText = $replyToMessage['text'] ?? $replyToMessage['caption'] ?? '';
             $ticketId = $this->findTicketIdInString($replyText);
 
             if ($ticketId) {
