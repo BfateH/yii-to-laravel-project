@@ -136,9 +136,10 @@ class TicketResource extends ModelResource
     protected function filters(): iterable
     {
         $currentUser = Auth::user();
+        $filters = [];
 
-        return [
-            BelongsTo::make(
+        if ($currentUser->isAdminRole()) {
+            $filters[] = BelongsTo::make(
                 __('Партнер'),
                 'user',
                 formatted: function (User $user) {
@@ -159,8 +160,10 @@ class TicketResource extends ModelResource
                         });
                     }
                     return $query;
-                }),
-        ];
+                });
+        }
+
+        return $filters;
     }
 
     protected function formFields(): iterable
