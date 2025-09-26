@@ -403,6 +403,16 @@ class TelegramWebhookService
             return null;
         }
 
+        if (!file_exists($tempFilePath) || !is_file($tempFilePath) || !is_readable($tempFilePath)) {
+            Log::error('TelegramWebhookService: Downloaded file is invalid for UploadedFile creation', [
+                'temp_file_path' => $tempFilePath,
+                'exists' => file_exists($tempFilePath),
+                'is_file' => is_file($tempFilePath),
+                'is_readable' => is_readable($tempFilePath),
+            ]);
+            return null;
+        }
+
         return new UploadedFile(
             $tempFilePath,
             $originalFileName,
