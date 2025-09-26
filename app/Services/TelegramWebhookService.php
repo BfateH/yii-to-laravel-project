@@ -3,6 +3,9 @@
 namespace App\Services;
 
 use App\Enums\Role;
+use App\Models\Ticket;
+use App\Modules\SupportChat\Services\MessageService;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
 use App\Models\User;
@@ -227,7 +230,79 @@ class TelegramWebhookService
             $ticketId = $this->findTicketIdInString($replyText);
 
             if ($ticketId) {
-                $this->sendTelegramMessage($chatId, "Тест только боту группы на конкретный тикет: #{$ticketId}");
+                $ticket = Ticket::query()->find($ticketId);
+                $messageText = $text;
+                $isSuccess = false;
+
+                try {
+                    if (!$ticket) {
+                        throw new \Exception('Ticket not found');
+                    }
+
+                    $ticketUser = $ticket->user;
+
+                    if (!$ticketUser) {
+                        throw new \Exception('Ticket user not found');
+                    }
+
+                    $partner = $ticketUser->partner;
+
+                    if (!$partner) {
+                        throw new \Exception('Partner not found');
+                    }
+
+                    $messageService = app(MessageService::class);
+
+                    // Обычное сообщение
+                    if (trim($messageText) !== '') {
+                        $messageData = [
+                            'message' => $messageText,
+                        ];
+
+                        $messageService->sendMessage(
+                            $ticket,
+                            $messageData,
+                            $partner
+                        );
+
+                        $isSuccess = true;
+                    }
+
+                    // Сообщение файл
+                    if (trim($messageText) === '' && isset($payload['message']['document'])) {
+                        $caption = $payload['message']['document']['caption'] ?? 'Вложение';
+                        $fileId = $payload['message']['document']['file_id'] ?? null;
+                        $fileName = $payload['message']['document']['file_name'] ?? null;
+
+                        $messageData = [
+                            'message' => $caption,
+                            'attachments' => []
+                        ];
+
+                        if ($fileId && $fileName) {
+                            $uploadedFile = $this->downloadFileFromTelegram($fileId, $fileName);
+                            $messageData['attachments'][] = $uploadedFile;
+
+                            $messageService->sendMessage(
+                                $ticket,
+                                $messageData,
+                                $partner
+                            );
+
+                            unlink($uploadedFile->getPathname());
+
+                            $isSuccess = true;
+                        }
+                    }
+                } catch (\Exception $e) {
+                    $isSuccess = false;
+                }
+
+                if ($isSuccess) {
+                    $this->sendTelegramMessage($chatId, "✅ Ответ отправлен в тикет #{$ticketId}");
+                } else {
+                    $this->sendTelegramMessage($chatId, "❌ Что-то пошло не так при ответе в тикет #{$ticketId}");
+                }
             }
 
             return [
@@ -252,6 +327,85 @@ class TelegramWebhookService
         }
 
         return 0;
+    }
+
+    protected function downloadFileFromTelegram(string $fileId, string $originalFileName): ?UploadedFile
+    {
+        $botToken = config('services.telegram.bot_token');
+        if (!$botToken) {
+            Log::error('TelegramWebhookService: BOT token not configured for file download');
+            return null;
+        }
+
+        $getFileUrl = "https://api.telegram.org/bot{$botToken}/getFile";
+        $response = Http::timeout(30)
+            ->withOptions(['verify' => config('app.env') !== 'local'])
+            ->post($getFileUrl, ['file_id' => $fileId]);
+
+        if (!$response->successful()) {
+            Log::error('TelegramWebhookService: Failed to get file info from Telegram', [
+                'file_id' => $fileId,
+                'status_code' => $response->status(),
+                'response_body' => $response->body(),
+            ]);
+            return null;
+        }
+
+        $data = $response->json();
+        if (!isset($data['ok']) || !$data['ok']) {
+            Log::error('TelegramWebhookService: Telegram API error getting file info', [
+                'file_id' => $fileId,
+                'api_response' => $data
+            ]);
+            return null;
+        }
+
+        $filePath = $data['result']['file_path'] ?? null;
+        if (!$filePath) {
+            Log::error('TelegramWebhookService: File path not found in Telegram response', ['file_id' => $fileId]);
+            return null;
+        }
+
+        $fileUrl = "https://api.telegram.org/file/bot{$botToken}/{$filePath}";
+
+        $fileContentsResponse = Http::timeout(60)
+            ->withOptions(['verify' => config('app.env') !== 'local'])->get($fileUrl);
+
+        if (!$fileContentsResponse->successful()) {
+            Log::error('TelegramWebhookService: Failed to download file contents from Telegram', [
+                'file_id' => $fileId,
+                'file_path' => $filePath,
+                'status_code' => $fileContentsResponse->status(),
+                'response_body' => $fileContentsResponse->body(),
+            ]);
+            return null;
+        }
+
+        $fileContents = $fileContentsResponse->body();
+        $tempFilePath = storage_path('app/private/' . $filePath);
+
+        if ($tempFilePath === false) {
+            Log::error('TelegramWebhookService: Could not create temporary file');
+            return null;
+        }
+
+        $bytesWritten = file_put_contents($tempFilePath, $fileContents);
+
+        if ($bytesWritten === false || $bytesWritten === 0) {
+            Log::error('TelegramWebhookService: Could not write file contents to temporary file', ['path' => $tempFilePath]);
+            if (file_exists($tempFilePath)) {
+                unlink($tempFilePath);
+            }
+            return null;
+        }
+
+        return new UploadedFile(
+            $tempFilePath,
+            $originalFileName,
+            null,
+            null,
+            false
+        );
     }
 
     private function attemptBindGroupToPartner(int $chatId, ?int $userId): array
