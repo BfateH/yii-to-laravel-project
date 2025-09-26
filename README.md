@@ -53,7 +53,11 @@
 
 Для работы уведомлений нужен `php artisan queue:work`
 
-Для уведомлений `telegram` указать в `.env` переменную `TELEGRAM_BOT_TOKEN=`
+Для уведомлений `telegram` указать в `.env` переменные `TELEGRAM_BOT_TOKEN=` и `TELEGRAM_WEBHOOK_SECRET=`.
+
+    Так же нужно установить вебхук. 
+    Можно вручную, но нужно использовать `TELEGRAM_WEBHOOK_SECRET=`
+    Либо авторизованный пользователь переходит сюда `/moonshine/admin/telegram/setTelegramWebhook` и установится автоматически
 
 Для работы `webpush` уведомлений нужно разрешить сайту присылать уведомления, 
 добавить в `.env` переменные `WEBPUSH_PUBLIC_KEY=` и `WEBPUSH_PRIVATE_KEY=`.
