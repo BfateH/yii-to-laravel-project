@@ -266,6 +266,7 @@ class TelegramWebhookService
                         );
 
                         $isSuccess = true;
+                        $this->sendTelegramMessage($chatId, "✅ Ответ отправлен в тикет #{$ticketId}");
                     }
 
                     // Сообщение файл
@@ -290,8 +291,8 @@ class TelegramWebhookService
                             );
 
                             unlink($uploadedFile->getPathname());
-
                             $isSuccess = true;
+                            $this->sendTelegramMessage($chatId, "✅ Файл $fileName отправлен в тикет #{$ticketId}");
                         }
                     }
                 } catch (\Exception $e) {
@@ -301,9 +302,7 @@ class TelegramWebhookService
                     $isSuccess = false;
                 }
 
-                if ($isSuccess) {
-                    $this->sendTelegramMessage($chatId, "✅ Ответ отправлен в тикет #{$ticketId}");
-                } else {
+                if (!$isSuccess) {
                     $this->sendTelegramMessage($chatId, "❌ Что-то пошло не так при ответе в тикет #{$ticketId}");
                 }
             }
