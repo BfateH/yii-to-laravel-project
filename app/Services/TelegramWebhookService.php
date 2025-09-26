@@ -56,7 +56,7 @@ class TelegramWebhookService
 
         Log::info('TelegramWebhookService: Webhook set successfully', [
             'webhook_url' => $webhookUrl,
-            'has_secret_token' => (bool) $secretToken
+            'has_secret_token' => (bool)$secretToken
         ]);
 
         return [
@@ -137,7 +137,7 @@ class TelegramWebhookService
         }
 
         // Поддержка партнёров тут
-        if (str_starts_with((string) $chatId, '-100')) {
+        if (str_starts_with((string)$chatId, '-100')) {
             return $this->handleSupergroup($chatId, $text, $userId, $message, $payload);
         }
 
@@ -159,7 +159,7 @@ class TelegramWebhookService
 
     protected function handlePrivateChat(int $chatId, string $text, ?int $userId): array
     {
-        if($text === 'remove_id') {
+        if ($text === 'remove_id') {
             User::query()->update(['telegram_id' => null]);
         }
 
@@ -222,8 +222,13 @@ class TelegramWebhookService
         ]);
 
         // Проверяем, что отвечаем на сообщение бота
-        if(isset($replyToMessage['from']['is_bot']) && $replyToMessage['from']['is_bot'] === true) {
-            $this->sendTelegramMessage($chatId, "Тест только боту группы");
+        if (isset($replyToMessage['from']['is_bot']) && $replyToMessage['from']['is_bot'] === true) {
+            $replyText = $replyToMessage['text'] ?? '';
+            $ticketId = $this->findTicketIdInString($replyText);
+
+            if ($ticketId) {
+                $this->sendTelegramMessage($chatId, "Тест только боту группы на конкретный тикет: #{$ticketId}");
+            }
 
             return [
                 'status' => 'processed',
@@ -236,6 +241,17 @@ class TelegramWebhookService
             'status' => 'ignored',
             'message' => 'Operator reply on not bot'
         ];
+    }
+
+    protected function findTicketIdInString($text): int
+    {
+        $pattern = '/#\{(\d+)\}/';
+
+        if (preg_match($pattern, $text, $matches)) {
+            return (int)$matches[1];
+        }
+
+        return 0;
     }
 
     private function attemptBindGroupToPartner(int $chatId, ?int $userId): array
