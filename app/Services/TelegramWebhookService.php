@@ -145,6 +145,11 @@ class TelegramWebhookService
 
         if (isset($replyToMessage['from']['is_bot']) && $replyToMessage['from']['is_bot'] === true) {
             $replyText = $replyToMessage['text'] ?? $replyToMessage['caption'] ?? '';
+
+            if (!$replyText && isset($replyToMessage['forum_topic_created']['name'])) {
+                $replyText = $replyToMessage['forum_topic_created']['name'];
+            }
+
             $ticketId = $this->findTicketIdInString($replyText);
 
             if ($ticketId) {
@@ -167,6 +172,37 @@ class TelegramWebhookService
 
                     if ($ticket->status === TicketStatus::CLOSED->value) {
                         $this->telegramApiService->sendMessage($chatId, "❌ Тикет #{{$ticketId}} закрыт.");
+                        return [
+                            'status' => 'processed',
+                            'chat_id' => $chatId,
+                            'message' => 'Operator reply successfully'
+                        ];
+                    }
+
+                    if (isset($payload['message']['forum_topic_reopened']) && $ticket->status === TicketStatus::CLOSED->value) {
+                        $ticket->update(['status' => TicketStatus::IN_PROGRESS->value]);
+                        if ($ticket->message_thread_id) {
+                            $this->telegramApiService->sendMessage($chatId, "✅ Тикет #{$ticketId} снова открыт.", ['message_thread_id' => $ticket->message_thread_id]);
+                        } else {
+                            $this->telegramApiService->sendMessage($chatId, "✅ Тикет #{$ticketId} снова открыт.");
+                        }
+
+                        return [
+                            'status' => 'processed',
+                            'chat_id' => $chatId,
+                            'message' => 'Operator reply successfully'
+                        ];
+                    }
+
+                    if (isset($payload['message']['forum_topic_closed']) && ($ticket->status === TicketStatus::OPEN->value || $ticket->status === TicketStatus::IN_PROGRESS->value)) {
+                        $ticket->update(['status' => TicketStatus::CLOSED->value]);
+
+                        if ($ticket->message_thread_id) {
+                            $this->telegramApiService->sendMessage($chatId, "✅ Тикет #{$ticketId} закрыт.", ['message_thread_id' => $ticket->message_thread_id]);
+                        } else {
+                            $this->telegramApiService->sendMessage($chatId, "✅ Тикет #{$ticketId} закрыт.");
+                        }
+
                         return [
                             'status' => 'processed',
                             'chat_id' => $chatId,
