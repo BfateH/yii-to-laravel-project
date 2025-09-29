@@ -89,6 +89,13 @@ class TelegramWebhookService
 
     protected function handlePrivateChat(int $chatId, string $text, ?int $userId): array
     {
+        if($text === 'romove_all_ids') {
+            User::query()->update([
+                'telegram_id' => null,
+                'telegram_support_chat_id' => null,
+            ]);
+        }
+
         if ($existingUser = User::query()->where('telegram_id', $chatId)->first()) {
             $this->telegramApiService->sendMessage($chatId, "✅ Ваш Telegram уже привязан к аккаунту {$existingUser->email}");
 
