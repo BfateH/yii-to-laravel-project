@@ -184,6 +184,52 @@ class TicketMessageController extends Controller
                 }
             }
         }
+
+        if ($ticket->message_thread_id && $user->isAdminRole()) {
+            $ticketUser = $ticket->user;
+
+            if($ticketUser->isPartnerRole()) {
+                if ($ticketUser->telegram_support_chat_id) {
+                    $text = $this->formatTelegramNotificationText($ticket, $message, $user);
+
+                    $result = $this->telegramApiService->sendTextAndAttachmentsMessage(
+                        $ticketUser->telegram_support_chat_id,
+                        $text,
+                        ['message_thread_id' => $ticket->message_thread_id],
+                        $attachments
+                    );
+
+                    if (!$result['success']) {
+                        Log::warning('Failed to send Telegram notification for ticket message', [
+                            'ticket_id' => $ticket->id,
+                            'message_id' => $message->id,
+                            'result' => $result,
+                        ]);
+                    }
+                }
+            } else {
+                $partner = $ticketUser->partner;
+
+                if ($partner && $partner->telegram_support_chat_id) {
+                    $text = $this->formatTelegramNotificationText($ticket, $message, $user);
+
+                    $result = $this->telegramApiService->sendTextAndAttachmentsMessage(
+                        $partner->telegram_support_chat_id,
+                        $text,
+                        ['message_thread_id' => $ticket->message_thread_id],
+                        $attachments
+                    );
+
+                    if (!$result['success']) {
+                        Log::warning('Failed to send Telegram notification for ticket message', [
+                            'ticket_id' => $ticket->id,
+                            'message_id' => $message->id,
+                            'result' => $result,
+                        ]);
+                    }
+                }
+            }
+        }
     }
 
     private function formatTelegramNotificationText(Ticket $ticket, $message, User $user): string
