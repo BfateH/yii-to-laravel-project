@@ -13,7 +13,7 @@ class EmailChannel implements ChannelInterface
      * @param Alert $alert
      * @return bool
      */
-    public function send(Alert $alert, $toCurrentUser = false): bool
+    public function send(Alert $alert): bool
     {
         try {
             $template = NotificationTemplate::where('key', $alert->type)

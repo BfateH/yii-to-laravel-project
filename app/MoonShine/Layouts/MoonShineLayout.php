@@ -65,10 +65,10 @@ final class MoonShineLayout extends AppLayout
                 MenuItem::make('Партнеры', PartnerResource::class)->canSee(fn() => $currentUser->isAdminRole()),
                 MenuItem::make(static fn() => __('moonshine::ui.resource.role_title'), MoonShineUserRoleResource::class)->canSee(fn() => $currentUser->isAdminRole()),
                 MenuGroup::make(static fn() => __('Уведомления'), [
-                    MenuItem::make('Каналы', ChannelResource::class),
-                    MenuItem::make('Уведомления', AlertResource::class),
-                    MenuItem::make('Настройки шаблонов', NotificationTemplateResource::class),
-                ])->icon('bell-alert')->canSee(fn() => $currentUser->isAdminRole()),
+                    MenuItem::make('Каналы', ChannelResource::class)->canSee(fn() => $currentUser->isAdminRole()),
+                    MenuItem::make('Список уведомлений', AlertResource::class)->canSee(fn() => $currentUser->isAdminRole() || $currentUser->isPartnerRole()),
+                    MenuItem::make('Настройки шаблонов', NotificationTemplateResource::class)->canSee(fn() => $currentUser->isAdminRole()),
+                ])->icon('bell-alert'),
             ])->icon('user-group'),
 
             MenuGroup::make(static fn() => __('Магазины'), [

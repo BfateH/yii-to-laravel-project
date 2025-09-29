@@ -112,7 +112,7 @@ class ProfilePageCustom extends ProfilePage
         }
 
         $alertFields[] = Flex::make([
-            Badge::make('Ваш telegram_id: <b>' . ($currentUser->telegram_id ? $currentUser->telegram_id : 'Не определен') . '</b>')
+            Badge::make('Ваш секретный код для привязки телеграм бота: <pre><b>' . $currentUser->secret_code_telegram . '</b></pre>')
         ])->columnSpan(12)->justifyAlign('start');
 
         $alertFields[] = Flex::make([

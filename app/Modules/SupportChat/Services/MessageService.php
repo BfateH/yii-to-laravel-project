@@ -2,6 +2,7 @@
 
 namespace App\Modules\SupportChat\Services;
 
+use App\Enums\AlertType;
 use App\Enums\Role;
 use App\Models\Ticket;
 use App\Models\TicketMessage;
@@ -19,27 +20,45 @@ class MessageService
     public function __construct(
         protected MessageRepositoryInterface    $messageRepository,
         protected AttachmentRepositoryInterface $attachmentRepository,
-        protected WebSocketServiceInterface     $webSocketService
-    )
-    {
+        protected WebSocketServiceInterface     $webSocketService,
+        protected AlertService                  $alertService
+    ) {
     }
 
     public function sendMessage(Ticket $ticket, array $data, User $user): TicketMessage
     {
         $data['ticket_id'] = $ticket->id;
         $data['user_id'] = $user->id;
-        $data['is_admin'] = $user->isAdminRole() || $user->isPartnerRole() ?? false;
+        $data['is_admin'] = $user->isAdminRole() || $user->isPartnerRole();
 
         $message = $this->messageRepository->create($data);
+        $this->updateTicketLastReadMessage($ticket, $message, $user);
+        $this->handleAttachments($message, $data);
 
+        $message->load(['attachments']);
+        $this->sendAlerts($ticket, $message, $user);
+        $this->webSocketService->broadcastMessage($message);
+
+        return $message;
+    }
+
+    public function getTicketMessages(Ticket $ticket): Collection
+    {
+        return $this->messageRepository->findByTicket($ticket);
+    }
+
+    private function updateTicketLastReadMessage(Ticket $ticket, TicketMessage $message, User $user): void
+    {
         if ($user->isAdminRole() || $user->isPartnerRole()) {
             $ticket->last_admin_message_read = $message->id;
         } else {
             $ticket->last_user_message_read = $message->id;
         }
-
         $ticket->save();
+    }
 
+    private function handleAttachments(TicketMessage $message, array $data): void
+    {
         if (!empty($data['attachments']) && is_array($data['attachments'])) {
             foreach ($data['attachments'] as $file) {
                 if ($file instanceof UploadedFile && $file->isValid()) {
@@ -54,38 +73,30 @@ class MessageService
                         ]);
                     }
                 } else {
-                    Log::warning('Error uploading attachment: ', [
-                        'file' => $file,
-                        'error' => $file->getError()
+                    Log::warning('Error uploading attachment: File is not a valid UploadedFile.', [
+                        'message_id' => $message->id,
+                        'file_type' => gettype($file),
+                        'is_instance_of_uploaded_file' => $file instanceof UploadedFile,
+                        'is_valid' => $file instanceof UploadedFile && $file->isValid(),
                     ]);
                 }
             }
         }
+    }
 
-        $message->refresh();
-        $alertService = app(AlertService::class);
-
-        // Если обычный пользователь, то уведомления отправляем партнеру, если партнера нет, то админам
+    private function sendAlerts(Ticket $ticket, TicketMessage $message, User $user): void
+    {
         if ($user->isDefaultUserRole()) {
             $partner = $user->partner;
-            $message->load(['attachments']);
 
             if ($partner) {
-                $alertService->send('ticket_message_created', $partner, $message->toArray());
+                $this->alertService->send(AlertType::TICKET_MESSAGE_CREATED->value, $partner, $message->toArray());
             } else {
-                $admins = User::query()->where('role_id', Role::admin->value);
+                $admins = User::query()->where('role_id', Role::admin->value)->get();
                 foreach ($admins as $admin) {
-                    $alertService->send('ticket_message_created', $admin, $message->toArray());
+                    $this->alertService->send(AlertType::TICKET_MESSAGE_CREATED->value, $admin, $message->toArray());
                 }
             }
         }
-
-        $this->webSocketService->broadcastMessage($message);
-        return $message;
-    }
-
-    public function getTicketMessages(Ticket $ticket): Collection
-    {
-        return $this->messageRepository->findByTicket($ticket);
     }
 }

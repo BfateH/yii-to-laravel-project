@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Modules\Acquiring\Services\WebhookService;
+use App\Services\TelegramApiService;
 use App\Services\TelegramWebhookService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -92,11 +93,11 @@ class WebhookController extends Controller
         }
     }
 
-    public function setTelegramWebhook(Request $request, TelegramWebhookService $telegramWebhookService): \Illuminate\Http\JsonResponse
+    public function setTelegramWebhook(Request $request, TelegramApiService $telegramApiService): \Illuminate\Http\JsonResponse
     {
         $webhookUrl = route('webhook.alerts.telegram');
         $secretToken = config('services.telegram.webhook_secret');
-        $result = $telegramWebhookService->setWebhook($webhookUrl, $secretToken);
+        $result = $telegramApiService->setWebhook($webhookUrl, $secretToken);
 
         if ($result['success']) {
             return response()->json([

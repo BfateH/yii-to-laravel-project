@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\MoonShine\Resources;
 
+use App\Enums\AlertType;
 use App\Models\Channel;
+use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\NotificationTemplate;
 
@@ -18,6 +20,7 @@ use MoonShine\Support\Enums\Color;
 use MoonShine\Support\ListOf;
 use MoonShine\UI\Components\Layout\Box;
 use MoonShine\UI\Fields\Date;
+use MoonShine\UI\Fields\Enum;
 use MoonShine\UI\Fields\ID;
 use MoonShine\Contracts\UI\FieldContract;
 use MoonShine\Contracts\UI\ComponentContract;
@@ -40,7 +43,12 @@ class NotificationTemplateResource extends ModelResource
 
     protected function activeActions(): ListOf
     {
-        return parent::activeActions()->except(Action::MASS_DELETE);
+        return parent::activeActions()->except(Action::MASS_DELETE, Action::DELETE);
+    }
+
+    protected function modifyQueryBuilder(Builder $builder): Builder
+    {
+        return $builder->orderBy('key', 'desc');
     }
 
     /**
@@ -50,7 +58,11 @@ class NotificationTemplateResource extends ModelResource
     {
         return [
             ID::make()->sortable(),
-            Text::make('Тип шаблона (key)', 'key'),
+
+            Enum::make('Тип', 'key')
+                ->attach(AlertType::class)
+                ->sortable()
+                ->badge(color: Color::GRAY),
 
             BelongsTo::make(
                 __('Канал уведомлений'),
@@ -77,7 +89,11 @@ class NotificationTemplateResource extends ModelResource
                     resource: ChannelResource::class,
                 )->badge(Color::PURPLE)->nullable()->required(),
 
-                Text::make('Тип шаблона (key)', 'key')->required(),
+                Enum::make('Тип шаблона (key)', 'key')
+                    ->attach(AlertType::class)
+                    ->nullable()
+                    ->required(),
+
                 Textarea::make('Subject', 'subject')->nullable(),
                 Textarea::make('Body', 'body')->required(),
 
@@ -92,7 +108,9 @@ class NotificationTemplateResource extends ModelResource
     {
         return [
             ID::make()->sortable(),
-            Text::make('Тип шаблона (key)', 'key'),
+            Enum::make('Тип шаблона (key)', 'key')
+                ->attach(AlertType::class)
+                ->badge(color: Color::GRAY),
 
             BelongsTo::make(
                 __('Канал уведомлений'),
@@ -101,8 +119,8 @@ class NotificationTemplateResource extends ModelResource
                 resource: ChannelResource::class,
             )->badge(Color::PURPLE),
 
-            Textarea::make('Subject', 'subject')->required(),
-            Textarea::make('Body', 'body')->required(),
+            Textarea::make('Subject', 'subject'),
+            Textarea::make('Body', 'body')->rawMode(),
 
             Date::make('Создан', 'created_at'),
         ];
@@ -119,7 +137,7 @@ class NotificationTemplateResource extends ModelResource
         return [
             'key' => [
                 'required',
-                'string',
+                Rule::enum(AlertType::class),
                 Rule::unique('notification_templates')->where(function ($query) use ($item) {
                     return $query->where('key', request('key'))
                         ->where('channel_id', request('channel_id'))
@@ -127,7 +145,10 @@ class NotificationTemplateResource extends ModelResource
                 })
             ],
             'subject' => 'nullable|string',
-            'body' => 'required|string',
+            'body' => [
+                'required',
+                'string',
+            ],
             'channel_id' => 'required|numeric|exists:channels,id',
         ];
     }

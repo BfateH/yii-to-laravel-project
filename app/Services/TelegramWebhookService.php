@@ -4,117 +4,21 @@ namespace App\Services;
 
 use App\Enums\Role;
 use App\Models\Ticket;
+use App\Modules\SupportChat\Enums\TicketStatus;
 use App\Modules\SupportChat\Services\MessageService;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Http;
 use App\Models\User;
+use Illuminate\Support\Str;
 
 class TelegramWebhookService
 {
-    private const TELEGRAM_API_BASE_URL = 'https://api.telegram.org/bot';
-    private const TELEGRAM_FILE_BASE_URL = 'https://api.telegram.org/file/bot';
+    private TelegramApiService $telegramApiService;
+    private MessageService $messageService;
 
-    private function getBotToken(): ?string
+    public function __construct(TelegramApiService $telegramApiService, MessageService $messageService)
     {
-        $token = config('services.telegram.bot_token');
-        if (!$token) {
-            Log::error('TelegramWebhookService: BOT token not configured.');
-        }
-        return $token;
-    }
-
-    private function getApiUrl(string $method): ?string
-    {
-        $token = $this->getBotToken();
-        if (!$token) {
-            return null;
-        }
-        return self::TELEGRAM_API_BASE_URL . $token . '/' . $method;
-    }
-
-    private function getFileUrl(string $filePath): ?string
-    {
-        $token = $this->getBotToken();
-        if (!$token) {
-            return null;
-        }
-        return self::TELEGRAM_FILE_BASE_URL . $token . '/' . $filePath;
-    }
-
-    public function setWebhook(string $webhookUrl, ?string $secretToken = null): array
-    {
-        $apiUrl = $this->getApiUrl('setWebhook');
-        if (!$apiUrl) {
-            return [
-                'success' => false,
-                'message' => 'Bot token is not configured.'
-            ];
-        }
-
-        $params = ['url' => $webhookUrl];
-        if ($secretToken) {
-            $params['secret_token'] = $secretToken;
-        }
-
-        $response = Http::timeout(30)->post($apiUrl, $params);
-
-        if (!$response->successful()) {
-            Log::error('TelegramWebhookService: Failed to set webhook', [
-                'status_code' => $response->status(),
-                'response_body' => $response->body()
-            ]);
-            return [
-                'success' => false,
-                'message' => 'HTTP Error: ' . $response->status() . ' - ' . $response->body()
-            ];
-        }
-
-        $responseData = $response->json();
-        if (!isset($responseData['ok']) || !$responseData['ok']) {
-            Log::error('TelegramWebhookService: Telegram API error setting webhook', [
-                'api_response' => $responseData
-            ]);
-            return [
-                'success' => false,
-                'message' => 'Telegram API Error: ' . ($responseData['description'] ?? 'Unknown error')
-            ];
-        }
-
-        Log::info('TelegramWebhookService: Webhook set successfully', [
-            'webhook_url' => $webhookUrl,
-            'has_secret_token' => (bool)$secretToken
-        ]);
-
-        return [
-            'success' => true,
-            'message' => 'Webhook set successfully.',
-            'result' => $responseData['result'] ?? null
-        ];
-    }
-
-    public function sendTelegramMessage(string $chatId, string $text): void
-    {
-        $apiUrl = $this->getApiUrl('sendMessage');
-        if (!$apiUrl) {
-            Log::error('TelegramWebhookService: Cannot send message, bot token not configured.');
-            return;
-        }
-
-        try {
-            Http::timeout(30)
-                ->withOptions(['verify' => config('app.env') !== 'local'])
-                ->post($apiUrl, [
-                    'chat_id' => $chatId,
-                    'text' => $text,
-                    'disable_web_page_preview' => true,
-                ]);
-        } catch (\Exception $e) {
-            Log::error('TelegramWebhookService: Failed to send Telegram message', [
-                'chat_id' => $chatId,
-                'error' => $e->getMessage()
-            ]);
-        }
+        $this->telegramApiService = $telegramApiService;
+        $this->messageService = $messageService;
     }
 
     public function handle(array $payload): array
@@ -183,7 +87,7 @@ class TelegramWebhookService
     protected function handlePrivateChat(int $chatId, string $text, ?int $userId): array
     {
         if ($existingUser = User::query()->where('telegram_id', $chatId)->first()) {
-            $this->sendTelegramMessage($chatId, "✅ Ваш Telegram уже привязан к аккаунту {$existingUser->email}");
+            $this->telegramApiService->sendMessage($chatId, "✅ Ваш Telegram уже привязан к аккаунту {$existingUser->email}");
 
             Log::info('TelegramWebhookService: Telegram already linked', [
                 'user_id' => $existingUser->id,
@@ -197,8 +101,8 @@ class TelegramWebhookService
             ];
         }
 
-        if (!filter_var($text, FILTER_VALIDATE_EMAIL)) {
-            $this->sendTelegramMessage($chatId, "Привет! Для подключения уведомлений отправьте ваш email, который вы используете на нашем сайте.\n\nПример: user@example.com");
+        if (!Str::startsWith($text, 'secret_token_')) {
+            $this->telegramApiService->sendMessage($chatId, "Привет! Для подключения уведомлений отправьте ваш секретный код для привязки телеграм бота.");
             return [
                 'status' => 'processed',
                 'chat_id' => $chatId,
@@ -243,6 +147,8 @@ class TelegramWebhookService
             $replyText = $replyToMessage['text'] ?? $replyToMessage['caption'] ?? '';
             $ticketId = $this->findTicketIdInString($replyText);
 
+            Log::debug('OPERATOR REPLY TICKET ID: ' . $ticketId);
+
             if ($ticketId) {
                 $ticket = Ticket::query()->find($ticketId);
 
@@ -261,15 +167,23 @@ class TelegramWebhookService
                         throw new \Exception('Partner not found');
                     }
 
-                    $messageService = app(MessageService::class);
+                    if($ticket->status === TicketStatus::CLOSED->value) {
+                        $this->telegramApiService->sendMessage($chatId, "❌ Тикет #{{$ticketId}} закрыт.");
+                        return [
+                            'status' => 'processed',
+                            'chat_id' => $chatId,
+                            'message' => 'Operator reply successfully'
+                        ];
+                    }
+
                     $isSuccess = false;
 
                     // Обычное текстовое сообщение
                     if (trim($text) !== '') {
                         $messageData = ['message' => $text];
-                        $messageService->sendMessage($ticket, $messageData, $partner);
+                        $this->messageService->sendMessage($ticket, $messageData, $partner);
                         $isSuccess = true;
-                        $this->sendTelegramMessage($chatId, "✅ Ответ отправлен в тикет #{$ticketId}");
+                        $this->telegramApiService->sendMessage($chatId, "✅ Ответ отправлен в тикет #{$ticketId}");
                     }
                     // Файл типа document
                     elseif (isset($payload['message']['document'])) {
@@ -281,7 +195,7 @@ class TelegramWebhookService
                     }
 
                     if (!$isSuccess) {
-                        $this->sendTelegramMessage($chatId, "❌ Что-то пошло не так при ответе в тикет #{$ticketId}");
+                        $this->telegramApiService->sendMessage($chatId, "❌ Что-то пошло не так при ответе в тикет #{$ticketId}");
                     }
 
                     return [
@@ -294,7 +208,7 @@ class TelegramWebhookService
                     Log::error('TelegramWebhookService: Operator reply failed: ', [
                         'error' => $e->getMessage(),
                     ]);
-                    $this->sendTelegramMessage($chatId, "❌ Что-то пошло не так при ответе в тикет #{$ticketId}");
+                    $this->telegramApiService->sendMessage($chatId, "❌ Что-то пошло не так при ответе в тикет #{$ticketId}");
                 }
             }
         }
@@ -311,23 +225,22 @@ class TelegramWebhookService
         $fileName = $documentData['file_name'] ?? null;
 
         if ($fileId && $fileName) {
-            $uploadedFile = $this->downloadFileFromTelegram($fileId, $fileName);
+            $uploadedFile = $this->telegramApiService->downloadFileAsUploadedFile($fileId, $fileName);
             if ($uploadedFile) {
-                $messageService = app(MessageService::class);
                 $messageData = [
                     'message' => $caption,
                     'attachments' => [$uploadedFile]
                 ];
 
-                $messageService->sendMessage($ticket, $messageData, $partner);
+                $this->messageService->sendMessage($ticket, $messageData, $partner);
                 unlink($uploadedFile->getPathname());
-                $this->sendTelegramMessage($chatId, "✅ Файл $fileName отправлен в тикет #{$ticketId}");
+                $this->telegramApiService->sendMessage($chatId, "✅ Файл $fileName отправлен в тикет #{$ticketId}");
                 return true;
             } else {
-                $this->sendTelegramMessage($chatId, "❌ Файл $fileName не отправлен в тикет #{$ticketId} (ошибка загрузки).");
+                $this->telegramApiService->sendMessage($chatId, "❌ Файл $fileName не отправлен в тикет #{$ticketId} (ошибка загрузки).");
             }
         } else {
-            $this->sendTelegramMessage($chatId, "❌ Файл не отправлен в тикет #{$ticketId} (данные отсутствуют).");
+            $this->telegramApiService->sendMessage($chatId, "❌ Файл не отправлен в тикет #{$ticketId} (данные отсутствуют).");
         }
         return false;
     }
@@ -340,30 +253,28 @@ class TelegramWebhookService
             $fileId = $largestPhoto['file_id'] ?? null;
 
             if ($fileId) {
-                $uploadedFile = $this->downloadFileFromTelegram($fileId, 'photo.jpg');
+                $uploadedFile = $this->telegramApiService->downloadFileAsUploadedFile($fileId, 'photo.jpg');
                 if ($uploadedFile) {
-                    $messageService = app(MessageService::class);
                     $messageData = [
                         'message' => $caption,
                         'attachments' => [$uploadedFile]
                     ];
 
-                    $messageService->sendMessage($ticket, $messageData, $partner);
+                    $this->messageService->sendMessage($ticket, $messageData, $partner);
                     unlink($uploadedFile->getPathname());
-                    $this->sendTelegramMessage($chatId, "✅ Файл {$uploadedFile->getClientOriginalName()} отправлен в тикет #{$ticketId}");
+                    $this->telegramApiService->sendMessage($chatId, "✅ Файл {$uploadedFile->getClientOriginalName()} отправлен в тикет #{$ticketId}");
                     return true;
                 } else {
-                    $this->sendTelegramMessage($chatId, "❌ Фото не отправлено в тикет #{$ticketId} (ошибка загрузки).");
+                    $this->telegramApiService->sendMessage($chatId, "❌ Фото не отправлено в тикет #{$ticketId} (ошибка загрузки).");
                 }
             } else {
-                $this->sendTelegramMessage($chatId, "❌ Фото не отправлено в тикет #{$ticketId} (file_id отсутствует).");
+                $this->telegramApiService->sendMessage($chatId, "❌ Фото не отправлено в тикет #{$ticketId} (file_id отсутствует).");
             }
         } else {
-            $this->sendTelegramMessage($chatId, "❌ Фото не отправлено в тикет #{$ticketId} (данные отсутствуют).");
+            $this->telegramApiService->sendMessage($chatId, "❌ Фото не отправлено в тикет #{$ticketId} (данные отсутствуют).");
         }
         return false;
     }
-
 
     protected function findTicketIdInString($text): int
     {
@@ -372,101 +283,6 @@ class TelegramWebhookService
             return (int)$matches[1];
         }
         return 0;
-    }
-
-    protected function downloadFileFromTelegram(string $fileId, string $originalFileName = null): ?UploadedFile
-    {
-        $apiUrl = $this->getApiUrl('getFile');
-        if (!$apiUrl) {
-            Log::error('TelegramWebhookService: Cannot download file, bot token not configured.');
-            return null;
-        }
-
-        $response = Http::timeout(30)
-            ->withOptions(['verify' => config('app.env') !== 'local'])
-            ->post($apiUrl, ['file_id' => $fileId]);
-
-        if (!$response->successful()) {
-            Log::error('TelegramWebhookService: Failed to get file info from Telegram', [
-                'file_id' => $fileId,
-                'status_code' => $response->status(),
-                'response_body' => $response->body(),
-            ]);
-            return null;
-        }
-
-        $data = $response->json();
-        if (!isset($data['ok']) || !$data['ok']) {
-            Log::error('TelegramWebhookService: Telegram API error getting file info', [
-                'file_id' => $fileId,
-                'api_response' => $data
-            ]);
-            return null;
-        }
-
-        $filePath = $data['result']['file_path'] ?? null;
-        if (!$filePath) {
-            Log::error('TelegramWebhookService: File path not found in Telegram response', ['file_id' => $fileId]);
-            return null;
-        }
-
-        $fileUrl = $this->getFileUrl($filePath);
-        if (!$fileUrl) {
-            Log::error('TelegramWebhookService: Cannot construct file URL, bot token not configured.');
-            return null;
-        }
-
-        $fileContentsResponse = Http::timeout(60)
-            ->withOptions(['verify' => config('app.env') !== 'local'])
-            ->get($fileUrl);
-
-        if (!$fileContentsResponse->successful()) {
-            Log::error('TelegramWebhookService: Failed to download file contents from Telegram', [
-                'file_id' => $fileId,
-                'file_path' => $filePath,
-                'status_code' => $fileContentsResponse->status(),
-                'response_body' => $fileContentsResponse->body(),
-            ]);
-            return null;
-        }
-
-        $fileContents = $fileContentsResponse->body();
-        $tempFilePath = tempnam(sys_get_temp_dir(), 'tg_dl_');
-        if ($tempFilePath === false) {
-            Log::error('TelegramWebhookService: Could not create temporary file in system temp dir');
-            return null;
-        }
-
-        $bytesWritten = file_put_contents($tempFilePath, $fileContents);
-        if ($bytesWritten === false || $bytesWritten === 0) {
-            Log::error('TelegramWebhookService: Could not write file contents to temporary file', ['path' => $tempFilePath]);
-            if (file_exists($tempFilePath)) {
-                unlink($tempFilePath);
-            }
-            return null;
-        }
-
-        if (!file_exists($tempFilePath) || !is_file($tempFilePath) || !is_readable($tempFilePath)) {
-            Log::error('TelegramWebhookService: Downloaded file is invalid for UploadedFile creation', [
-                'temp_file_path' => $tempFilePath,
-                'exists' => file_exists($tempFilePath),
-                'is_file' => is_file($tempFilePath),
-                'is_readable' => is_readable($tempFilePath),
-            ]);
-            return null;
-        }
-
-        if (!$originalFileName) {
-            $originalFileName = basename($filePath);
-        }
-
-        return new UploadedFile(
-            $tempFilePath,
-            $originalFileName,
-            null,
-            null,
-            true
-        );
     }
 
     private function attemptBindGroupToPartner(int $chatId, ?int $userId): array
@@ -484,7 +300,7 @@ class TelegramWebhookService
             ->first();
 
         if (!$user) {
-            $this->sendTelegramMessage($chatId, "❌ Для привязки группы в неё должен написать партнёр.");
+            $this->telegramApiService->sendMessage($chatId, "❌ Для привязки группы в неё должен написать партнёр.");
             return [
                 'status' => 'ignored',
                 'message' => 'Sender is not a partner'
@@ -494,7 +310,7 @@ class TelegramWebhookService
         $user->telegram_support_chat_id = $chatId;
         $user->save();
 
-        $this->sendTelegramMessage($chatId, "✅ Группа успешно привязана к партнёру {$user->email}");
+        $this->telegramApiService->sendMessage($chatId, "✅ Группа успешно привязана к партнёру {$user->email}");
 
         Log::info('TelegramWebhookService: Group auto-bound to partner', [
             'user_id' => $user->id,
@@ -508,40 +324,38 @@ class TelegramWebhookService
         ];
     }
 
-    private function linkTelegramByEmailAddress(string $chatId, string $email): array
+    private function linkTelegramByEmailAddress(string $chatId, string $secretToken): array
     {
-        $user = User::query()->where('email', $email)->first();
+        $user = User::query()->where('secret_code_telegram', $secretToken)->first();
 
         if (!$user) {
-            Log::warning('TelegramWebhookService: Email not found', [
+            Log::warning('TelegramWebhookService: User not found', [
                 'chat_id' => $chatId,
-                'email' => $email
             ]);
 
-            $this->sendTelegramMessage($chatId, "❌ Пользователь с email {$email} не найден в нашей системе.");
+            $this->telegramApiService->sendMessage($chatId, "❌ Пользователь с таким секертным кодом не найден в нашей системе.");
 
             return [
                 'status' => 'error',
                 'chat_id' => $chatId,
-                'message' => 'Email not found'
+                'message' => 'User not found'
             ];
         }
 
         if (!$user->telegram_id) {
             $user->update(['telegram_id' => $chatId]);
 
-            Log::info('TelegramWebhookService: Linked by email', [
+            Log::info('TelegramWebhookService: Linked by secret token', [
                 'user_id' => $user->id,
                 'chat_id' => $chatId,
-                'email' => $email
             ]);
 
-            $this->sendTelegramMessage($chatId, "✅ Ваш Telegram успешно привязан к аккаунту {$user->email}!");
+            $this->telegramApiService->sendMessage($chatId, "✅ Ваш Telegram успешно привязан к аккаунту {$user->email}!");
         } else {
             if ($user->telegram_id === $chatId) {
-                $this->sendTelegramMessage($chatId, "✅ Ваш Telegram уже привязан к аккаунту {$user->email}!");
+                $this->telegramApiService->sendMessage($chatId, "✅ Ваш Telegram уже привязан к аккаунту {$user->email}!");
             } else {
-                $this->sendTelegramMessage($chatId, "✅ Ваш Telegram уже был привязан к аккаунту {$user->email}. Уведомления приходят на привязанный аккаунт.");
+                $this->telegramApiService->sendMessage($chatId, "✅ Ваш Telegram уже был привязан к аккаунту {$user->email}. Уведомления приходят на привязанный аккаунт.");
             }
         }
 
@@ -549,7 +363,7 @@ class TelegramWebhookService
             'status' => 'processed',
             'chat_id' => $chatId,
             'system_user_id' => $user->id,
-            'action' => 'linked_by_email'
+            'action' => 'linked_by_secret_token'
         ];
     }
 }

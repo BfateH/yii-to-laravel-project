@@ -10,6 +10,8 @@ use App\Modules\Alerts\Channels\EmailChannel;
 use App\Modules\Alerts\Channels\WebPushChannel;
 use App\Modules\Alerts\Channels\TelegramChannel;
 use App\Models\AlertLog;
+use App\Modules\Alerts\Interfaces\ChannelInterface;
+use Illuminate\Support\Facades\Log;
 
 class AlertService
 {
@@ -105,16 +107,27 @@ class AlertService
         $channelClass = $this->getChannelClass($alert->channel->name);
 
         if ($channelClass && class_exists($channelClass)) {
-            $channelInstance = new $channelClass();
-
             try {
-                $result = $channelInstance->send($alert);
-                $this->logAlert($alert, $result ? 'sent' : 'failed');
-                if ($result) {
-                    $alert->update(['sent_at' => now()]);
+                $channelInstance = app($channelClass);
+
+                if (! $channelInstance instanceof ChannelInterface) {
+                    Log::error("AlertService: Channel class {$channelClass} does not implement ChannelInterface.");
+                    $this->logAlert($alert, 'failed', 'Channel class does not implement ChannelInterface');
+                    return;
+                }
+
+                try {
+                    $result = $channelInstance->send($alert);
+                    $this->logAlert($alert, $result ? 'sent' : 'failed');
+                    if ($result) {
+                        $alert->update(['sent_at' => now()]);
+                    }
+                } catch (\Exception $e) {
+                    $this->logAlert($alert, 'failed', $e->getMessage());
                 }
             } catch (\Exception $e) {
-                $this->logAlert($alert, 'failed', $e->getMessage());
+                Log::error("AlertService: Failed to resolve channel class {$channelClass}. Error: " . $e->getMessage());
+                $this->logAlert($alert, 'failed', 'Failed to resolve channel instance: ' . $e->getMessage());
             }
         } else {
             $this->logAlert($alert, 'failed', 'Channel class not found');

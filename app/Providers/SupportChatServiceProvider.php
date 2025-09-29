@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Modules\Alerts\Services\AlertService;
 use Illuminate\Support\ServiceProvider;
 
 class SupportChatServiceProvider extends ServiceProvider
@@ -34,7 +35,8 @@ class SupportChatServiceProvider extends ServiceProvider
                 return new \App\Modules\SupportChat\Services\MessageService(
                     $app->make(\App\Modules\SupportChat\Contracts\MessageRepositoryInterface::class),
                     $app->make(\App\Modules\SupportChat\Contracts\AttachmentRepositoryInterface::class),
-                    $app->make(\App\Modules\SupportChat\Contracts\WebSocketServiceInterface::class)
+                    $app->make(\App\Modules\SupportChat\Contracts\WebSocketServiceInterface::class),
+                    $app->make(AlertService::class),
                 );
             }
         );

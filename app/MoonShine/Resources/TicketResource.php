@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\MoonShine\Resources;
 
+use App\Enums\AlertType;
 use App\Enums\Role;
 use App\Models\Ticket;
 use App\Models\User;
@@ -16,6 +17,7 @@ use App\MoonShine\Pages\Ticket\TicketFormPage;
 use App\MoonShine\Pages\Ticket\TicketIndexPage;
 use App\MoonShine\Resources\users\CommonUserResource;
 use App\MoonShine\Resources\users\PartnerResource;
+use App\Services\TelegramApiService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -275,17 +277,19 @@ class TicketResource extends ModelResource
             ];
 
             $alertService = app(AlertService::class);
+            $superGroupChatId = null;
 
             if ($currentUser->isDefaultUserRole()) {
                 $partner = $currentUser->partner;
 
                 if ($partner) {
-                    $alertService->send('ticket_created', $partner, $ticketData);
+                    $alertService->send(AlertType::TICKET_CREATED->value, $partner, $ticketData);
+                    $superGroupChatId = $partner->telegram_support_chat_id;
                 } else {
                     $admins = User::query()->where('role_id', Role::admin->value);
                     foreach ($admins as $admin) {
                         try {
-                            $alertService->send('ticket_created', $admin, $ticketData);
+                            $alertService->send(AlertType::TICKET_CREATED->value, $admin, $ticketData);
                         } catch (\Exception $exception) {
                             Log::error('Sent to admin failed: ' . $exception->getMessage());
                         }
@@ -294,7 +298,43 @@ class TicketResource extends ModelResource
             }
 
             if ($currentUser->isPartnerRole()) {
-                $alertService->send('ticket_created', $currentUser, $ticketData);
+                $alertService->send(AlertType::TICKET_CREATED->value, $currentUser, $ticketData);
+                $superGroupChatId = $currentUser->telegram_support_chat_id;
+            }
+
+            if ($superGroupChatId) {
+                try {
+                    $telegramApiService = app(TelegramApiService::class);
+                    $responseResult = $telegramApiService->createForumTopic($superGroupChatId, 'Тикет #{' . $ticket->id . '}');
+
+                    if (isset($responseResult['message_thread_id']) && $responseResult['message_thread_id']) {
+                        $ticket->update([
+                            'message_thread_id' => $responseResult['message_thread_id'],
+                        ]);
+
+                        $categoryName = TicketCategory::from($ticket->category)->toString();
+
+                        $textToTelegram = "✅ Тикет #{" . $ticket->id . "} создан. \n";
+                        $textToTelegram .= "<b>Категория обращения:</b> " . $categoryName . "\n";
+                        $textToTelegram .= "<b>Тема:</b> " . $ticket->subject . "\n";
+                        $textToTelegram .= "<b>Описание:</b> " . $ticket->description;
+
+                        $result = $telegramApiService->sendMessage(
+                            $superGroupChatId,
+                            $textToTelegram,
+                            ['message_thread_id' => $ticket->message_thread_id]
+                        );
+
+                        if (!$result['success']) {
+                            Log::warning('Failed to send Telegram notification for ticket_created', [
+                                'ticket_id' => $ticket->id,
+                                'result' => $result,
+                            ]);
+                        }
+                    }
+                } catch (\Exception $e) {
+                    Log::error('Failed to create forum topic: ' . $e->getMessage());
+                }
             }
         }
 
@@ -320,6 +360,28 @@ class TicketResource extends ModelResource
 
         $websocketService = app(WebSocketService::class);
         $websocketService->broadcastTicketStatusChanged($item, $oldStatus);
+
+        $ticketUser = $item->user;
+        $telegramApiService = app(TelegramApiService::class);
+
+        try {
+            if($item->message_thread_id) {
+                if ($ticketUser->isPartnerRole() && $ticketUser->telegram_support_chat_id) {
+                    $telegramApiService->deleteForumTopic($ticketUser->telegram_support_chat_id, $item->message_thread_id);
+                    $telegramApiService->sendMessage($ticketUser->telegram_support_chat_id, '✅ Тикет #{' . $item->id . '} был закрыт');
+                }
+
+                if($ticketUser->isDefaultUserRole()) {
+                    $partner = $ticketUser->partner;
+                    if ($partner && $partner->telegram_support_chat_id) {
+                        $telegramApiService->deleteForumTopic($partner->telegram_support_chat_id, $item->message_thread_id);
+                        $telegramApiService->sendMessage($partner->telegram_support_chat_id, '✅ Тикет #{' . $item->id . '} был закрыт');
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            Log::error('Failed to delete forum topic: ' . $e->getMessage());
+        }
 
         return MoonShineJsonResponse::make()
             ->toast('Тикет успешно закрыт.', ToastType::SUCCESS)

@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\AlertType;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
@@ -37,7 +38,7 @@ return new class extends Migration
             switch ($channel->name) {
                 case 'email':
                     $templates[] = [
-                        'key' => 'ticket_created',
+                        'key' => AlertType::TICKET_CREATED->value,
                         'channel_id' => $channel->id,
                         'subject' => 'Новый тикет #{{id}}',
                         'body' => "Создан новый тикет #{{id}}.<br>Тема: {subject}<br>Ссылка: {ticket_link}",
@@ -45,7 +46,7 @@ return new class extends Migration
                         'updated_at' => now()
                     ];
                     $templates[] = [
-                        'key' => 'ticket_message_created',
+                        'key' => AlertType::TICKET_MESSAGE_CREATED->value,
                         'channel_id' => $channel->id,
                         'subject' => 'Новое сообщение в тикете #{{ticket_id}}',
                         'body' => "Новое сообщение в тикете #{{ticket_id}}<br>Сообщение: {message}",
@@ -56,7 +57,7 @@ return new class extends Migration
 
                 case 'webpush':
                     $templates[] = [
-                        'key' => 'ticket_created',
+                        'key' => AlertType::TICKET_CREATED->value,
                         'channel_id' => $channel->id,
                         'subject' => 'Новый тикет #{{id}}',
                         'body' => "Создан новый тикет #{{id}}\nТема: {subject}\nСсылка: {ticket_link}",
@@ -64,7 +65,7 @@ return new class extends Migration
                         'updated_at' => now()
                     ];
                     $templates[] = [
-                        'key' => 'ticket_message_created',
+                        'key' => AlertType::TICKET_MESSAGE_CREATED->value,
                         'channel_id' => $channel->id,
                         'subject' => 'Новое сообщение в тикете #{{ticket_id}}',
                         'body' => "Новое сообщение в тикете #{{ticket_id}}\n\nСообщение: {message}",
@@ -75,7 +76,7 @@ return new class extends Migration
 
                 case 'telegram':
                     $templates[] = [
-                        'key' => 'ticket_created',
+                        'key' => AlertType::TICKET_CREATED->value,
                         'channel_id' => $channel->id,
                         'subject' => null,
                         'body' => "🔔 Новый тикет #{{id}}\n\nТема: {subject}\nСсылка: {ticket_link}",
@@ -83,7 +84,7 @@ return new class extends Migration
                         'updated_at' => now()
                     ];
                     $templates[] = [
-                        'key' => 'ticket_message_created',
+                        'key' => AlertType::TICKET_MESSAGE_CREATED->value,
                         'channel_id' => $channel->id,
                         'subject' => null,
                         'body' => "🔔 Новое сообщение в тикете #{{ticket_id}}\n\nСообщение: {message}",

@@ -25,6 +25,7 @@ class Ticket extends Model
 
         'last_user_message_read',
         'last_admin_message_read',
+        'message_thread_id'
     ];
 
     protected $casts = [

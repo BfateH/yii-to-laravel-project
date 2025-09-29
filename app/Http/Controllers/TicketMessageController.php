@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Modules\SupportChat\Enums\TicketStatus;
 use App\Modules\SupportChat\Resources\MessageResource;
 use App\Modules\SupportChat\Services\MessageService;
+use App\Services\TelegramApiService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -17,10 +18,12 @@ use Illuminate\Support\Facades\Log;
 class TicketMessageController extends Controller
 {
     protected MessageService $messageService;
+    protected TelegramApiService $telegramApiService;
 
-    public function __construct(MessageService $messageService)
+    public function __construct(MessageService $messageService, TelegramApiService $telegramApiService)
     {
         $this->messageService = $messageService;
+        $this->telegramApiService = $telegramApiService;
     }
 
     /**
@@ -94,6 +97,9 @@ class TicketMessageController extends Controller
             );
 
             $message->load(['user', 'attachments', 'ticket']);
+            // отправка в группы - отедельная лоигка от основных уведомлений
+            $this->sendTelegramNotification($ticket, $message, $user);
+
             return MessageResource::make($message);
         } catch (\Illuminate\Validation\ValidationException $e) {
             Log::error('Validation error in ticket message store: ' . $e->getMessage(), [
@@ -123,13 +129,71 @@ class TicketMessageController extends Controller
             $canAccess = true;
         }
 
-        if($user && $user->isPartnerRole()) {
+        if ($user && $user->isPartnerRole()) {
             $partner = $ticket->user->partner;
-            if($partner && $partner->id === $user->id) {
+            if ($partner && $partner->id === $user->id) {
                 $canAccess = true;
             }
         }
 
         return $canAccess;
     }
+
+    private function sendTelegramNotification(Ticket $ticket, $message, User $user): void
+    {
+        $attachments = $message->attachments->toArray();
+
+        if ($ticket->message_thread_id && $user->isPartnerRole() && $user->telegram_support_chat_id) {
+            $text = $this->formatTelegramNotificationText($ticket, $message, $user);
+
+            $result = $this->telegramApiService->sendTextAndAttachmentsMessage(
+                $user->telegram_support_chat_id,
+                $text,
+                ['message_thread_id' => $ticket->message_thread_id],
+                $attachments
+            );
+
+            if (!$result['success']) {
+                Log::warning('Failed to send Telegram notification for ticket message', [
+                    'ticket_id' => $ticket->id,
+                    'message_id' => $message->id,
+                    'result' => $result,
+                ]);
+            }
+        }
+
+        if ($ticket->message_thread_id && $user->isDefaultUserRole()) {
+            $partner = $user->partner;
+
+            if ($partner && $partner->telegram_support_chat_id) {
+                $text = $this->formatTelegramNotificationText($ticket, $message, $user);
+
+                $result = $this->telegramApiService->sendTextAndAttachmentsMessage(
+                    $partner->telegram_support_chat_id,
+                    $text,
+                    ['message_thread_id' => $ticket->message_thread_id],
+                    $attachments
+                );
+
+                if (!$result['success']) {
+                    Log::warning('Failed to send Telegram notification for ticket message', [
+                        'ticket_id' => $ticket->id,
+                        'message_id' => $message->id,
+                        'result' => $result,
+                    ]);
+                }
+            }
+        }
+    }
+
+    private function formatTelegramNotificationText(Ticket $ticket, $message, User $user): string
+    {
+        $text = "<b>🔔 Новое сообщение в тикете #{{$ticket->id}}</b>\n";
+
+        $messageText = trim($message->message);
+        $text .= "<b>Сообщение:</b> " . e($messageText) . "\n";
+
+        return $text;
+    }
+
 }

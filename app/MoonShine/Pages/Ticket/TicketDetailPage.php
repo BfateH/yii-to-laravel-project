@@ -124,8 +124,8 @@ class TicketDetailPage extends DetailPage
                     ActionButton::make('Закрыть тикет')
                         ->method('closeTicket', ['id' => $item->id])
                         ->icon('check-circle')
-                        ->withConfirm('Вы уверены, что хотите закрыть тикет?', '')
                         ->success()
+                        ->withConfirm('Вы уверены, что хотите закрыть тикет?', '')
                         ->canSee(fn() => $item->status === TicketStatus::OPEN->value || $item->status === TicketStatus::IN_PROGRESS->value),
                 ]
             )->justifyAlign('end'),

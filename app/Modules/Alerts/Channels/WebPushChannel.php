@@ -37,7 +37,7 @@ class WebPushChannel implements ChannelInterface
      * @param Alert $alert
      * @return bool
      */
-    public function send(Alert $alert, $toCurrentUser = false): bool
+    public function send(Alert $alert): bool
     {
         try {
             if (!$this->isUserSubscribedToWebPush($alert->user_id)) {

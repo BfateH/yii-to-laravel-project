@@ -7,23 +7,40 @@ use App\Enums\Role;
 use App\Modules\Acquiring\Enums\AcquirerType;
 use App\Modules\OrderManagement\Models\Order;
 use App\Modules\OrderManagement\Models\Package;
+use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Laravel\Sanctum\HasApiTokens;
 use MoonShine\Laravel\Models\MoonshineUserRole;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 
 class User extends Authenticatable implements JWTSubject
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
+    /** @use HasFactory<UserFactory> */
     use HasFactory;
     use Notifiable;
     use HasApiTokens;
     use SoftDeletes;
+
+    protected static function booted(): void
+    {
+        static::creating(function (User $user) {
+            do {
+                $token = 'secret_token_' . Str::random(128);
+                $exists = DB::table('users')
+                    ->where('secret_code_telegram', $token)
+                    ->exists();
+            } while ($exists);
+
+            $user->secret_code_telegram = $token;
+        });
+    }
 
     protected $table = 'users';
 
@@ -50,7 +67,8 @@ class User extends Authenticatable implements JWTSubject
         'delete_requested_at',
         'delete_confirmation_token',
 
-        'telegram_id'
+        'telegram_id',
+        'telegram_support_chat_id'
     ];
 
     /**
