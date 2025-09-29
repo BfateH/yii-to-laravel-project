@@ -147,8 +147,6 @@ class TelegramWebhookService
             $replyText = $replyToMessage['text'] ?? $replyToMessage['caption'] ?? '';
             $ticketId = $this->findTicketIdInString($replyText);
 
-            Log::debug('OPERATOR REPLY TICKET ID: ' . $ticketId);
-
             if ($ticketId) {
                 $ticket = Ticket::query()->find($ticketId);
 
@@ -167,7 +165,7 @@ class TelegramWebhookService
                         throw new \Exception('Partner not found');
                     }
 
-                    if($ticket->status === TicketStatus::CLOSED->value) {
+                    if ($ticket->status === TicketStatus::CLOSED->value) {
                         $this->telegramApiService->sendMessage($chatId, "❌ Тикет #{{$ticketId}} закрыт.");
                         return [
                             'status' => 'processed',
@@ -183,19 +181,25 @@ class TelegramWebhookService
                         $messageData = ['message' => $text];
                         $this->messageService->sendMessage($ticket, $messageData, $partner);
                         $isSuccess = true;
-                        $this->telegramApiService->sendMessage($chatId, "✅ Ответ отправлен в тикет #{$ticketId}");
-                    }
-                    // Файл типа document
+                        if ($ticket->message_thread_id) {
+                            $this->telegramApiService->sendMessage($chatId, "✅ Ответ отправлен в тикет #{$ticketId}", ['message_thread_id' => $ticket->message_thread_id]);
+                        } else {
+                            $this->telegramApiService->sendMessage($chatId, "✅ Ответ отправлен в тикет #{$ticketId}");
+                        }
+                    } // Файл типа document
                     elseif (isset($payload['message']['document'])) {
                         $isSuccess = $this->processDocumentAttachment($payload['message']['document'], $chatId, $ticketId, $ticket, $partner, $payload['message']['caption'] ?? '');
-                    }
-                    // Файл типа photo
+                    } // Файл типа photo
                     elseif (isset($payload['message']['photo'])) {
                         $isSuccess = $this->processPhotoAttachment($payload['message']['photo'], $chatId, $ticketId, $ticket, $partner, $payload['message']['caption'] ?? '');
                     }
 
                     if (!$isSuccess) {
-                        $this->telegramApiService->sendMessage($chatId, "❌ Что-то пошло не так при ответе в тикет #{$ticketId}");
+                        if ($ticket->message_thread_id) {
+                            $this->telegramApiService->sendMessage($chatId, "❌ Что-то пошло не так при ответе в тикет #{$ticketId}", ['message_thread_id' => $ticket->message_thread_id]);
+                        } else {
+                            $this->telegramApiService->sendMessage($chatId, "❌ Что-то пошло не так при ответе в тикет #{$ticketId}");
+                        }
                     }
 
                     return [
@@ -208,7 +212,11 @@ class TelegramWebhookService
                     Log::error('TelegramWebhookService: Operator reply failed: ', [
                         'error' => $e->getMessage(),
                     ]);
-                    $this->telegramApiService->sendMessage($chatId, "❌ Что-то пошло не так при ответе в тикет #{$ticketId}");
+                    if ($ticket->message_thread_id) {
+                        $this->telegramApiService->sendMessage($chatId, "❌ Что-то пошло не так при ответе в тикет #{$ticketId}", ['message_thread_id' => $ticket->message_thread_id]);
+                    } else {
+                        $this->telegramApiService->sendMessage($chatId, "❌ Что-то пошло не так при ответе в тикет #{$ticketId}");
+                    }
                 }
             }
         }
@@ -234,13 +242,26 @@ class TelegramWebhookService
 
                 $this->messageService->sendMessage($ticket, $messageData, $partner);
                 unlink($uploadedFile->getPathname());
-                $this->telegramApiService->sendMessage($chatId, "✅ Файл $fileName отправлен в тикет #{$ticketId}");
+                if ($ticket->message_thread_id) {
+                    $this->telegramApiService->sendMessage($chatId, "✅ Файл $fileName отправлен в тикет #{$ticketId}", ['message_thread_id' => $ticket->message_thread_id]);
+                } else {
+                    $this->telegramApiService->sendMessage($chatId, "✅ Файл $fileName отправлен в тикет #{$ticketId}");
+                }
                 return true;
             } else {
-                $this->telegramApiService->sendMessage($chatId, "❌ Файл $fileName не отправлен в тикет #{$ticketId} (ошибка загрузки).");
+                if ($ticket->message_thread_id) {
+                    $this->telegramApiService->sendMessage($chatId, "❌ Файл $fileName не отправлен в тикет #{$ticketId} (ошибка загрузки).", ['message_thread_id' => $ticket->message_thread_id]);
+                } else {
+                    $this->telegramApiService->sendMessage($chatId, "❌ Файл $fileName не отправлен в тикет #{$ticketId} (ошибка загрузки).");
+                }
             }
         } else {
-            $this->telegramApiService->sendMessage($chatId, "❌ Файл не отправлен в тикет #{$ticketId} (данные отсутствуют).");
+            if ($ticket->message_thread_id) {
+                $this->telegramApiService->sendMessage($chatId, "❌ Файл не отправлен в тикет #{$ticketId} (данные отсутствуют).", ['message_thread_id' => $ticket->message_thread_id]);
+
+            } else {
+                $this->telegramApiService->sendMessage($chatId, "❌ Файл не отправлен в тикет #{$ticketId} (данные отсутствуют).");
+            }
         }
         return false;
     }
@@ -262,16 +283,32 @@ class TelegramWebhookService
 
                     $this->messageService->sendMessage($ticket, $messageData, $partner);
                     unlink($uploadedFile->getPathname());
-                    $this->telegramApiService->sendMessage($chatId, "✅ Файл {$uploadedFile->getClientOriginalName()} отправлен в тикет #{$ticketId}");
+                    if ($ticket->message_thread_id) {
+                        $this->telegramApiService->sendMessage($chatId, "✅ Файл {$uploadedFile->getClientOriginalName()} отправлен в тикет #{$ticketId}", ['message_thread_id' => $ticket->message_thread_id]);
+                    } else {
+                        $this->telegramApiService->sendMessage($chatId, "✅ Файл {$uploadedFile->getClientOriginalName()} отправлен в тикет #{$ticketId}");
+                    }
                     return true;
                 } else {
-                    $this->telegramApiService->sendMessage($chatId, "❌ Фото не отправлено в тикет #{$ticketId} (ошибка загрузки).");
+                    if ($ticket->message_thread_id) {
+                        $this->telegramApiService->sendMessage($chatId, "❌ Фото не отправлено в тикет #{$ticketId} (ошибка загрузки).", ['message_thread_id' => $ticket->message_thread_id]);
+                    } else {
+                        $this->telegramApiService->sendMessage($chatId, "❌ Фото не отправлено в тикет #{$ticketId} (ошибка загрузки).");
+                    }
                 }
             } else {
-                $this->telegramApiService->sendMessage($chatId, "❌ Фото не отправлено в тикет #{$ticketId} (file_id отсутствует).");
+                if ($ticket->message_thread_id) {
+                    $this->telegramApiService->sendMessage($chatId, "❌ Фото не отправлено в тикет #{$ticketId} (file_id отсутствует).", ['message_thread_id' => $ticket->message_thread_id]);
+                } else {
+                    $this->telegramApiService->sendMessage($chatId, "❌ Фото не отправлено в тикет #{$ticketId} (file_id отсутствует).");
+                }
             }
         } else {
-            $this->telegramApiService->sendMessage($chatId, "❌ Фото не отправлено в тикет #{$ticketId} (данные отсутствуют).");
+            if ($ticket->message_thread_id) {
+                $this->telegramApiService->sendMessage($chatId, "❌ Фото не отправлено в тикет #{$ticketId} (данные отсутствуют).", ['message_thread_id' => $ticket->message_thread_id];
+            } else {
+                $this->telegramApiService->sendMessage($chatId, "❌ Фото не отправлено в тикет #{$ticketId} (данные отсутствуют).");
+            }
         }
         return false;
     }
