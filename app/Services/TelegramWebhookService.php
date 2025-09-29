@@ -6,6 +6,7 @@ use App\Enums\Role;
 use App\Models\Ticket;
 use App\Modules\SupportChat\Enums\TicketStatus;
 use App\Modules\SupportChat\Services\MessageService;
+use App\Modules\SupportChat\Services\WebSocketService;
 use Illuminate\Support\Facades\Log;
 use App\Models\User;
 use Illuminate\Support\Str;
@@ -14,11 +15,13 @@ class TelegramWebhookService
 {
     private TelegramApiService $telegramApiService;
     private MessageService $messageService;
+    private WebSocketService $webSocketService;
 
-    public function __construct(TelegramApiService $telegramApiService, MessageService $messageService)
+    public function __construct(TelegramApiService $telegramApiService, MessageService $messageService, WebSocketService $webSocketService)
     {
         $this->telegramApiService = $telegramApiService;
         $this->messageService = $messageService;
+        $this->webSocketService = $webSocketService;
     }
 
     public function handle(array $payload): array
@@ -170,15 +173,6 @@ class TelegramWebhookService
                         throw new \Exception('Partner not found');
                     }
 
-                    if ($ticket->status === TicketStatus::CLOSED->value) {
-                        $this->telegramApiService->sendMessage($chatId, "❌ Тикет #{{$ticketId}} закрыт.");
-                        return [
-                            'status' => 'processed',
-                            'chat_id' => $chatId,
-                            'message' => 'Operator reply successfully'
-                        ];
-                    }
-
                     if (isset($payload['message']['forum_topic_reopened']) && $ticket->status === TicketStatus::CLOSED->value) {
                         $ticket->update(['status' => TicketStatus::IN_PROGRESS->value]);
                         if ($ticket->message_thread_id) {
@@ -194,6 +188,15 @@ class TelegramWebhookService
                         ];
                     }
 
+                    if ($ticket->status === TicketStatus::CLOSED->value) {
+                        $this->telegramApiService->sendMessage($chatId, "❌ Тикет #{{$ticketId}} закрыт.");
+                        return [
+                            'status' => 'processed',
+                            'chat_id' => $chatId,
+                            'message' => 'Operator reply successfully'
+                        ];
+                    }
+
                     if (isset($payload['message']['forum_topic_closed']) && ($ticket->status === TicketStatus::OPEN->value || $ticket->status === TicketStatus::IN_PROGRESS->value)) {
                         $ticket->update(['status' => TicketStatus::CLOSED->value]);
 
@@ -202,6 +205,8 @@ class TelegramWebhookService
                         } else {
                             $this->telegramApiService->sendMessage($chatId, "✅ Тикет #{$ticketId} закрыт.");
                         }
+
+                        $this->webSocketService->broadcastTicketStatusChanged($ticket, TicketStatus::CLOSED);
 
                         return [
                             'status' => 'processed',
