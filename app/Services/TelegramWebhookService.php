@@ -305,7 +305,7 @@ class TelegramWebhookService
             }
         } else {
             if ($ticket->message_thread_id) {
-                $this->telegramApiService->sendMessage($chatId, "❌ Фото не отправлено в тикет #{$ticketId} (данные отсутствуют).", ['message_thread_id' => $ticket->message_thread_id];
+                $this->telegramApiService->sendMessage($chatId, "❌ Фото не отправлено в тикет #{$ticketId} (данные отсутствуют).", ['message_thread_id' => $ticket->message_thread_id]);
             } else {
                 $this->telegramApiService->sendMessage($chatId, "❌ Фото не отправлено в тикет #{$ticketId} (данные отсутствуют).");
             }
