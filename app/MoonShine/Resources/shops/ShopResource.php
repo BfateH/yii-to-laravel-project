@@ -8,12 +8,11 @@ use App\Models\Brand;
 use App\Models\Country;
 use App\Models\Shop;
 use App\Models\ShopCategory;
+use App\MoonShine\Fields\CKEditor;
 use App\MoonShine\Resources\CountryResource;
-use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
-use MoonShine\Contracts\UI\ComponentContract;
 use MoonShine\Contracts\UI\FieldContract;
 use MoonShine\Laravel\Enums\Ability;
 use MoonShine\Laravel\Enums\Action;
@@ -27,7 +26,6 @@ use MoonShine\UI\Components\Badge;
 use MoonShine\UI\Components\Layout\Box;
 use MoonShine\UI\Components\Layout\Column;
 use MoonShine\UI\Components\Layout\Grid;
-use MoonShine\UI\Components\Table\TableBuilder;
 use MoonShine\UI\Components\Tabs;
 use MoonShine\UI\Components\Tabs\Tab;
 use MoonShine\UI\Fields\ID;
@@ -130,7 +128,7 @@ class ShopResource extends ModelResource
                             ])->columnSpan(12),
 
                             Column::make([
-                                Textarea::make('Описание', 'description')->placeholder('Введите описание')
+                                CKEditor::make('Описание', 'description')
                             ])->columnSpan(12),
 
                             Column::make([

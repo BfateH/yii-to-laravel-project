@@ -15,6 +15,8 @@ export default defineConfig({
                 'resources/js/moonshine-echo.js',
                 'resources/js/admin-echo-listener.js',
                 'resources/js/webpush.js',
+                'resources/js/ckeditor.js',
+                'resources/css/ckeditor.css',
                 'resources/css/support-chat.css',
             ],
             ssr: 'resources/js/ssr.ts',

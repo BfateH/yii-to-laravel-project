@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "2f263d54caa65e348347a7d3c444d4b8",
+    "content-hash": "3da1fbc8f8d01f5ea535bd35a07171a7",
     "packages": [
         {
             "name": "brick/math",
@@ -3247,6 +3247,71 @@
                 }
             ],
             "time": "2025-03-24T10:02:05+00:00"
+        },
+        {
+            "name": "moonshine/easymde",
+            "version": "1.0.4",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/moonshine-software/easymde.git",
+                "reference": "c6d60e0e835680fa47725eb9add27a20e3910b8e"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/moonshine-software/easymde/zipball/c6d60e0e835680fa47725eb9add27a20e3910b8e",
+                "reference": "c6d60e0e835680fa47725eb9add27a20e3910b8e",
+                "shasum": ""
+            },
+            "require": {
+                "ext-curl": "*",
+                "ext-json": "*",
+                "php": "^8.2|^8.3"
+            },
+            "conflict": {
+                "moonshine/moonshine": "<3.0.0"
+            },
+            "require-dev": {
+                "moonshine/moonshine": "^3.0",
+                "orchestra/testbench": "^9.0",
+                "phpunit/phpunit": "^11.0.1",
+                "rector/rector": "^1.0"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "MoonShine\\EasyMde\\Providers\\EasyMdeServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "MoonShine\\EasyMde\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Danil Shutsky",
+                    "email": "info@cutcode.ru",
+                    "homepage": "https://cutcode.dev"
+                }
+            ],
+            "description": "Markdown editor for MoonShine",
+            "homepage": "https://moonshine-laravel.com",
+            "keywords": [
+                "easymde",
+                "markdown",
+                "moonshine"
+            ],
+            "support": {
+                "issues": "https://github.com/moonshine-software/easymde/issues",
+                "source": "https://github.com/moonshine-software/easymde"
+            },
+            "time": "2025-01-14T10:48:56+00:00"
         },
         {
             "name": "moonshine/moonshine",

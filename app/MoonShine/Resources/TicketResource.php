@@ -200,7 +200,7 @@ class TicketResource extends ModelResource
         $canAccess = false;
 
         // Собственные тикеты
-        if ($currentUser->id === $item->user_id) {
+        if ($item && $currentUser->id === $item->user_id) {
             $canAccess = true;
         }
 

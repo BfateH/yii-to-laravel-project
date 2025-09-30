@@ -8,9 +8,15 @@ use App\Modules\Acquiring\Resources\AcquirerConfigResource;
 use App\Modules\Acquiring\Resources\AcquiringResource;
 use App\Modules\OrderManagement\MoonShine\Resources\OrderResource;
 use App\Modules\OrderManagement\MoonShine\Resources\PackageResource;
+use App\MoonShine\Resources\AlertResource;
+use App\MoonShine\Resources\ArticleCategoryResource;
+use App\MoonShine\Resources\ArticleResource;
+use App\MoonShine\Resources\ChannelResource;
+use App\MoonShine\Resources\NotificationTemplateResource;
 use App\MoonShine\Resources\shops\BrandResource;
 use App\MoonShine\Resources\shops\ShopCategoryResource;
 use App\MoonShine\Resources\shops\ShopResource;
+use App\MoonShine\Resources\TicketResource;
 use App\MoonShine\Resources\users\PartnerResource;
 use App\MoonShine\Resources\users\UserResource;
 use Illuminate\Support\Facades\Auth;
@@ -24,13 +30,6 @@ use MoonShine\Laravel\Resources\MoonShineUserRoleResource;
 use MoonShine\MenuManager\MenuGroup;
 use MoonShine\MenuManager\MenuItem;
 use MoonShine\UI\Components\{Layout\Footer, Layout\Layout};
-use App\MoonShine\Resources\CountryResource;
-use App\MoonShine\Resources\TicketResource;
-use App\MoonShine\Resources\AlertResource;
-use App\MoonShine\Resources\ChannelResource;
-use App\MoonShine\Resources\AlertLogResource;
-use App\MoonShine\Resources\NotificationTemplateResource;
-use App\MoonShine\Resources\SubscriptionResource;
 
 final class MoonShineLayout extends AppLayout
 {
@@ -76,6 +75,11 @@ final class MoonShineLayout extends AppLayout
                 MenuItem::make(static fn() => __('Бренды магазинов'), BrandResource::class)->icon('tag'),
                 MenuItem::make(static fn() => __('Список магазинов'), ShopResource::class)->icon('shopping-bag'),
             ])->icon('shopping-bag')->canSee(fn() => $currentUser->isAdminRole()),
+
+            MenuGroup::make(static fn() => __('Помощь'), [
+                MenuItem::make('Категории статей', ArticleCategoryResource::class)->icon('list-bullet'),
+                MenuItem::make('Статьи', ArticleResource::class)->icon('book-open'),
+            ])->icon('question-mark-circle')->canSee(fn() => $currentUser->isAdminRole() || $currentUser->isPartnerRole()),
 
             MenuItem::make('Заказы', OrderResource::class)->icon('shopping-cart'),
             MenuItem::make('Посылки', PackageResource::class)->icon('cube'),

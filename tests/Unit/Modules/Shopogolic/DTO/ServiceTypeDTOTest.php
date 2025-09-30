@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\Shopogolic\DTO;
+namespace Tests\Unit\Modules\Shopogolic\DTO;
 
 use App\Modules\Providers\Shopogolic\DTO\ServiceTypeDTO;
 use Tests\TestCase;

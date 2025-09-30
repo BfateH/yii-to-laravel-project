@@ -29,6 +29,9 @@ use App\MoonShine\Resources\ChannelResource;
 use App\MoonShine\Resources\AlertLogResource;
 use App\MoonShine\Resources\NotificationTemplateResource;
 use App\MoonShine\Resources\SubscriptionResource;
+use App\MoonShine\Resources\ArticleResource;
+use App\MoonShine\Resources\ArticleCategoryResource;
+use App\MoonShine\Resources\ArticleRelatedResource;
 
 class MoonShineServiceProvider extends ServiceProvider
 {
@@ -60,6 +63,9 @@ class MoonShineServiceProvider extends ServiceProvider
                 AlertLogResource::class,
                 NotificationTemplateResource::class,
                 SubscriptionResource::class,
+                ArticleResource::class,
+                ArticleCategoryResource::class,
+                ArticleRelatedResource::class,
             ])
             ->pages([
                 ...$config->getPages(),

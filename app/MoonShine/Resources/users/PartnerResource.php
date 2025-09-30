@@ -104,7 +104,7 @@ class PartnerResource extends BaseUserResource
                     ])->icon('user-circle'),
 
                     Tab::make(__('Статус и безопасность'), [
-                        Switcher::make(__('Активен'), 'is_active'),
+                        Switcher::make(__('Активен'), 'is_active')->default(true),
                         Switcher::make(__('Заблокирован'), 'is_banned'),
                         Textarea::make(__('Причина блокировки'), 'ban_reason'),
                     ])->icon('shield-check'),
